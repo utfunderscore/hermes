@@ -13,7 +13,7 @@ class NettyInboundHandler(
     private val logger = KotlinLogging.logger { }
 
     override fun channelRead(
-        ctx: ChannelHandlerContext?,
+        ctx: ChannelHandlerContext,
         msg: Any?,
     ) {
         logger.info { "Received" }
@@ -23,20 +23,28 @@ class NettyInboundHandler(
             return
         }
 
-        packetPlatform.handlePacket(msg)
+        val hermesChannel = packetPlatform.getChannel(ctx.channel())
+
+        packetPlatform.handlePacket(hermesChannel, msg)
     }
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         logger.info { "New connection from ${ctx.channel().remoteAddress()}" }
         packetPlatform.activeChannels.add(ctx.channel())
 
-        packetPlatform.handlePacket(ChannelRegisterPacket(NettyChannel(ctx.channel())))
+        val hermesChannel = packetPlatform.getChannel(ctx.channel())
+
+        packetPlatform.handlePacket(hermesChannel, ChannelRegisterPacket(hermesChannel))
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.info { "Connection closed from ${ctx.channel().remoteAddress()}" }
         packetPlatform.activeChannels.remove(ctx.channel())
 
-        packetPlatform.handlePacket(ChannelUnregisterPacket(NettyChannel(ctx.channel())))
+        val hermesChannel = packetPlatform.getChannel(ctx.channel())
+
+        packetPlatform.handlePacket(hermesChannel, ChannelUnregisterPacket(hermesChannel))
+
+        packetPlatform.removeChannel(ctx.channel())
     }
 }

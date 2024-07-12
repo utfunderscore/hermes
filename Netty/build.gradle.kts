@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "1.1.0"
+version = "1.2.0"
 
 dependencies {
     testImplementation(kotlin("test"))
