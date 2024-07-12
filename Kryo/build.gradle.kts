@@ -8,7 +8,7 @@ version = "1.0-SNAPSHOT"
 dependencies {
     testImplementation(kotlin("test"))
 
-    api("com.esotericsoftware:kryo5:5.6.0")
+    compileOnly("com.esotericsoftware:kryo5:5.6.0")
     compileOnly(project(":Core"))
 }
 
