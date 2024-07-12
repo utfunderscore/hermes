@@ -1,8 +1,9 @@
 package org.readutf.hermes.listeners
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.readutf.hermes.listeners.annotation.PacketHandler
 import org.readutf.hermes.Packet
+import org.readutf.hermes.channel.HermesChannel
+import org.readutf.hermes.listeners.annotation.PacketHandler
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
@@ -13,10 +14,13 @@ class ListenerManager {
     private val logger = KotlinLogging.logger { }
     private val listeners = mutableMapOf<Class<out Packet>, MutableList<Listener>>()
 
-    fun invokeListeners(packet: Packet) {
+    fun invokeListeners(
+        hermesChannel: HermesChannel,
+        packet: Packet,
+    ) {
         listeners.entries.forEach { (clazz, packetListeners) ->
             if (clazz.isAssignableFrom(packet.javaClass)) {
-                packetListeners.forEach { listener: Listener -> listener.acceptPacket(packet) }
+                packetListeners.forEach { listener: Listener -> listener.acceptPacket(hermesChannel, packet) }
             }
         }
     }
@@ -34,7 +38,10 @@ class ListenerManager {
         registerListener(
             T::class.java,
             object : Listener {
-                override fun acceptPacket(packet: Packet) {
+                override fun acceptPacket(
+                    hermesChannel: HermesChannel,
+                    packet: Packet,
+                ) {
                     typedListener(packet as T)
                 }
             },
@@ -46,26 +53,44 @@ class ListenerManager {
         kClass.memberFunctions.forEach { function ->
             val packetHandler = function.findAnnotation<PacketHandler>() ?: return@forEach
 
-            if (function.valueParameters.size != 1) {
-                logger.error { "Function ${function.name} must only have a packet as a parameter." }
-                return@forEach
-            }
-            val parameter = function.valueParameters[0]
-            val parameterType = parameter.type.jvmErasure.java
-            if (!Packet::class.java.isAssignableFrom(parameterType)) {
-                logger.error { "Function ${function.name} must only have a packet as a parameter." }
-                return@forEach
+            val parameters = function.valueParameters
+
+            var packetClass: Class<out Packet> = Packet::class.java
+            var channelIndex = 0
+            var packetIndex = 1
+
+            parameters.forEachIndexed { index, kParameter ->
+                val javaClass = kParameter.type.jvmErasure.java
+                if (javaClass.isAssignableFrom(HermesChannel::class.java)) {
+                    channelIndex = index
+                    packetClass = javaClass.asSubclass(Packet::class.java)
+                } else if (javaClass.isAssignableFrom(Packet::class.java)) {
+                    packetIndex = index
+                } else {
+                    logger.error { "Invalid parameter type ${kParameter.type.jvmErasure}" }
+                    return@forEach
+                }
             }
 
             val listener =
                 object : Listener {
-                    override fun acceptPacket(packet: Packet) {
-                        function.call(any, packet)
+                    override fun acceptPacket(
+                        hermesChannel: HermesChannel,
+                        packet: Packet,
+                    ) {
+                        val args =
+                            arrayOf(
+                                any,
+                                if (channelIndex == 0) packet else hermesChannel,
+                                if (packetIndex == 1) hermesChannel else packet,
+                            )
+
+                        function.call(*args)
                     }
                 }
 
-            logger.info { "Registering listener for packet type: ${parameterType.simpleName}" }
-            registerListener(parameterType.asSubclass(Packet::class.java), listener)
+            logger.info { "Registering packet listener '${function.name}'" }
+            registerListener(packetClass, listener)
         }
     }
 }
