@@ -1,6 +1,7 @@
 package org.readutf.hermes
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.listeners.ListenerManager
 import org.readutf.hermes.platform.PacketPlatform
 import java.util.function.Consumer
@@ -12,7 +13,9 @@ class PacketManager<T : PacketPlatform>(
     private val listenerManager = ListenerManager()
 
     init {
-        packetPlatform.setupPacketListener { onPacketReceived(it) }
+        packetPlatform.setupPacketListener { channel, packet ->
+            onPacketReceived(channel, packet)
+        }
     }
 
     fun sendPacket(packet: Packet) {
@@ -29,9 +32,12 @@ class PacketManager<T : PacketPlatform>(
         return this
     }
 
-    private fun onPacketReceived(packet: Packet) {
+    private fun onPacketReceived(
+        hermesChannel: HermesChannel,
+        packet: Packet,
+    ) {
         logger.info { "Received packet: $packet" }
-        listenerManager.invokeListeners(packet)
+        listenerManager.invokeListeners(hermesChannel, packet)
     }
 
     fun stop() {

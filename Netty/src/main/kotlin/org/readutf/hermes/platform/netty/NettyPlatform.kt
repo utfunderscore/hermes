@@ -11,12 +11,13 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import org.readutf.hermes.Packet
 import org.readutf.hermes.PacketManager
+import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.platform.PacketPlatform
 import org.readutf.hermes.serializer.PacketSerializer
-import org.readutf.hermes.Packet
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 abstract class NettyPlatform internal constructor(
     internal val hostName: String,
@@ -27,8 +28,10 @@ abstract class NettyPlatform internal constructor(
     PacketPlatform {
     val logger = KotlinLogging.logger { }
     private var thread: Thread? = null
-    lateinit var packetConsumer: Consumer<Packet>
+    private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
     lateinit var channel: Channel
+
+    private val channelMap = mutableMapOf<Channel, HermesChannel>()
 
     var activeChannels = mutableSetOf<Channel>()
 
@@ -46,11 +49,18 @@ abstract class NettyPlatform internal constructor(
             }
         }
 
-    fun handlePacket(packet: Packet) {
-        if (::packetConsumer.isInitialized) packetConsumer.accept(packet)
+    fun handlePacket(
+        hermesChannel: HermesChannel,
+        packet: Packet,
+    ) {
+        if (::packetConsumer.isInitialized) packetConsumer.accept(hermesChannel, packet)
     }
 
-    override fun setupPacketListener(packetConsumer: Consumer<Packet>) {
+    fun getChannel(channel: Channel): HermesChannel = channelMap.getOrPut(channel) { NettyHermesChannel(channel) }
+
+    fun removeChannel(channel: Channel) = channelMap.remove(channel)
+
+    override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>) {
         this.packetConsumer = packetConsumer
     }
 
