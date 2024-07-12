@@ -48,49 +48,74 @@ class ListenerManager {
         )
     }
 
-    fun registerAll(any: Any) {
-        val kClass: KClass<*> = any::class
+    fun registerAll(scannedObject: Any) {
+        val kClass: KClass<*> = scannedObject::class
         kClass.memberFunctions.forEach { function ->
             val packetHandler = function.findAnnotation<PacketHandler>() ?: return@forEach
 
             val parameters = function.valueParameters
 
-            var packetClass: Class<out Packet> = Packet::class.java
-            var channelIndex = 0
-            var packetIndex = 1
-
-            parameters.forEachIndexed { index, kParameter ->
-                val javaClass = kParameter.type.jvmErasure.java
-                if (javaClass.isAssignableFrom(HermesChannel::class.java)) {
-                    channelIndex = index
-                    packetClass = javaClass.asSubclass(Packet::class.java)
-                } else if (javaClass.isAssignableFrom(Packet::class.java)) {
-                    packetIndex = index
-                } else {
-                    logger.error { "Invalid parameter type ${kParameter.type.jvmErasure}" }
-                    return@forEach
+            if (parameters.size == 1) {
+                if (!parameters[0]
+                        .type.jvmErasure.java
+                        .isAssignableFrom(Packet::class.java)
+                ) {
+                    logger.error { "Parameter is not a packet in listener ${function.name}" }
+                    return
                 }
-            }
 
-            val listener =
-                object : Listener {
-                    override fun acceptPacket(
-                        hermesChannel: HermesChannel,
-                        packet: Packet,
-                    ) {
-                        val args =
-                            arrayOf(
-                                any,
-                                if (channelIndex == 0) packet else hermesChannel,
-                                if (packetIndex == 1) hermesChannel else packet,
-                            )
+                val packetClass: Class<out Packet> =
+                    parameters[0]
+                        .type.jvmErasure.java
+                        .asSubclass(Packet::class.java)
 
-                        function.call(*args)
+                val listener =
+                    object : Listener {
+                        override fun acceptPacket(
+                            hermesChannel: HermesChannel,
+                            packet: Packet,
+                        ) {
+                            function.call(scannedObject, packet)
+                        }
                     }
+
+                registerListener(packetClass, listener)
+            } else if (parameters.size == 2) {
+                val channelIndex =
+                    parameters.indexOfFirst { kParameter ->
+                        kParameter.type.jvmErasure.java
+                            .isAssignableFrom(HermesChannel::class.java)
+                    }
+                val packetIndex =
+                    parameters.indexOfFirst { kParameter ->
+                        kParameter.type.jvmErasure.java
+                            .isAssignableFrom(Packet::class.java)
+                    }
+
+
+                if (packetIndex == -1 || channelIndex == -1) {
+                    logger.error { "Listener ${function.name} does not have a channel or packet parameter" }
+                    return
                 }
 
-            logger.info { "Registering packet listener '${function.name}'" }
-            registerListener(packetClass, listener)
+
+                val packetType = parameters[packetIndex].type.jvmErasure.java.asSubclass(Packet::class.java)
+
+                val listener =
+                    object : Listener {
+                        override fun acceptPacket(
+                            hermesChannel: HermesChannel,
+                            packet: Packet,
+                        ) {
+                            val args = arrayOfNulls<Any>(3)
+                            args[0] = scannedObject
+                            args[channelIndex] = hermesChannel
+                            args[packetIndex] = packet
+                        }
+                    }
+
+                registerListener(packetType, listener)
+            }
         }
     }
 }
