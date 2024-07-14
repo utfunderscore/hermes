@@ -11,6 +11,8 @@ class PacketManager<T : PacketPlatform>(
 ) {
     private val logger = KotlinLogging.logger { }
     private val listenerManager = ListenerManager()
+    private var globalExceptionHandler = Consumer<Throwable> { }
+    private val exceptionHandlers = mutableMapOf<Class<out Throwable>, Consumer<Throwable>>()
 
     init {
         packetPlatform.setupPacketListener { channel, packet ->
@@ -25,6 +27,26 @@ class PacketManager<T : PacketPlatform>(
     fun start(): PacketManager<T> {
         packetPlatform.start()
         return this
+    }
+
+    fun exception(consumer: Consumer<Throwable>): PacketManager<T> {
+        globalExceptionHandler = consumer
+        return this
+    }
+
+    fun exception(
+        clazz: Class<out Throwable>,
+        consumer: Consumer<Throwable>,
+    ): PacketManager<T> {
+        exceptionHandlers[clazz] = consumer
+        return this
+    }
+
+    fun handleException(throwable: Throwable) {
+        val consumer = exceptionHandlers[throwable::class.java]
+        consumer?.accept(throwable)
+
+        globalExceptionHandler.accept(throwable)
     }
 
     fun editListeners(consumer: Consumer<ListenerManager>): PacketManager<T> {
