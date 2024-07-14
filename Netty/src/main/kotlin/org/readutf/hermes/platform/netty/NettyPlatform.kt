@@ -30,10 +30,15 @@ abstract class NettyPlatform internal constructor(
     private var thread: Thread? = null
     private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
     lateinit var channel: Channel
+    lateinit var packetManager: PacketManager<NettyPlatform>
 
     private val channelMap = mutableMapOf<Channel, HermesChannel>()
 
     var activeChannels = mutableSetOf<Channel>()
+
+    override fun init(packetManager: PacketManager<*>) {
+        this.packetManager = packetManager as PacketManager<NettyPlatform>
+    }
 
     fun getChannelInitializer(): ChannelInitializer<SocketChannel> =
         object : ChannelInitializer<SocketChannel>() {
