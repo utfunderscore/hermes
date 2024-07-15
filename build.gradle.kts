@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "1.3.2"
+version = "1.3.3"
 // version = "1.3.0"
 
 repositories {
