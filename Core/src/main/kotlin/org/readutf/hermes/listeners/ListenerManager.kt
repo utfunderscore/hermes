@@ -92,14 +92,15 @@ class ListenerManager {
                             .isAssignableFrom(Packet::class.java)
                     }
 
-
                 if (packetIndex == -1 || channelIndex == -1) {
                     logger.error { "Listener ${function.name} does not have a channel or packet parameter" }
                     return
                 }
 
-
-                val packetType = parameters[packetIndex].type.jvmErasure.java.asSubclass(Packet::class.java)
+                val packetType =
+                    parameters[packetIndex]
+                        .type.jvmErasure.java
+                        .asSubclass(Packet::class.java)
 
                 val listener =
                     object : Listener {
