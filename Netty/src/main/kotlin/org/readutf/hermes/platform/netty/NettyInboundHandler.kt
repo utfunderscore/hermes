@@ -16,10 +16,8 @@ class NettyInboundHandler(
         ctx: ChannelHandlerContext,
         msg: Any?,
     ) {
-        logger.info { "Received" }
-
         if (msg !is Packet) {
-            logger.info { "Received unknown message: $msg" }
+            logger.warn { "Received unknown message: $msg" }
             return
         }
 
@@ -52,8 +50,9 @@ class NettyInboundHandler(
         ctx: ChannelHandlerContext,
         cause: Throwable,
     ) {
-        logger.info { "Exception caught" }
-
-        packetPlatform.packetManager.handleException(cause)
+        val handled = packetPlatform.packetManager.handleException(cause)
+        if (!handled) {
+            throw cause
+        }
     }
 }
