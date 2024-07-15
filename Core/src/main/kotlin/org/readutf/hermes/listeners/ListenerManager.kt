@@ -34,6 +34,20 @@ class ListenerManager {
         listeners[clazz] = currentListeners
     }
 
+    inline fun <reified T : Packet> registerListener(typedListener: TypedListener<T>) {
+        registerListener(
+            T::class.java,
+            object : Listener {
+                override fun acceptPacket(
+                    hermesChannel: HermesChannel,
+                    packet: Packet,
+                ) {
+                    typedListener.handle(packet as T)
+                }
+            },
+        )
+    }
+
     inline fun <reified T : Packet> registerListener(crossinline typedListener: (T) -> Unit) {
         registerListener(
             T::class.java,
