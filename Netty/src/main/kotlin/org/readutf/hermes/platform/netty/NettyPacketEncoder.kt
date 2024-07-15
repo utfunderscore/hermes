@@ -34,8 +34,6 @@ class NettyPacketEncoder(
 
             buffer.putInt(it.size)
             buffer.put(it)
-
-            println("Packet encoded: ${buffer.array().contentToString()}")
         }
     }
 }
