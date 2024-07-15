@@ -52,6 +52,8 @@ class NettyInboundHandler(
         ctx: ChannelHandlerContext,
         cause: Throwable,
     ) {
+        logger.info { "Exception caught" }
+
         packetPlatform.packetManager.handleException(cause)
     }
 }

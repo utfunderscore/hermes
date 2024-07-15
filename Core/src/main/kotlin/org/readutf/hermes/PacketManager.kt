@@ -2,6 +2,7 @@ package org.readutf.hermes
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.channel.HermesChannel
+import org.readutf.hermes.exceptions.ExceptionManager
 import org.readutf.hermes.listeners.ListenerManager
 import org.readutf.hermes.platform.PacketPlatform
 import java.util.function.Consumer
@@ -11,13 +12,13 @@ class PacketManager<T : PacketPlatform>(
 ) {
     private val logger = KotlinLogging.logger { }
     private val listenerManager = ListenerManager()
-    private var globalExceptionHandler = Consumer<Throwable> { }
-    private val exceptionHandlers = mutableMapOf<Class<out Throwable>, Consumer<Throwable>>()
+    private val exceptionManager = ExceptionManager()
 
     init {
         packetPlatform.setupPacketListener { channel, packet ->
             onPacketReceived(channel, packet)
         }
+        packetPlatform.init(this)
     }
 
     fun sendPacket(packet: Packet) {
@@ -30,24 +31,19 @@ class PacketManager<T : PacketPlatform>(
     }
 
     fun exception(consumer: Consumer<Throwable>): PacketManager<T> {
-        globalExceptionHandler = consumer
+        exceptionManager.setGlobalExceptionHandler(consumer)
         return this
     }
 
-    fun exception(
-        clazz: Class<out Throwable>,
-        consumer: Consumer<Throwable>,
+    fun <U : Throwable> exception(
+        clazz: Class<U>,
+        consumer: Consumer<U>,
     ): PacketManager<T> {
-        exceptionHandlers[clazz] = consumer
+        exceptionManager.setExceptionHandler(clazz, consumer)
         return this
     }
 
-    fun handleException(throwable: Throwable) {
-        val consumer = exceptionHandlers[throwable::class.java]
-        consumer?.accept(throwable)
-
-        globalExceptionHandler.accept(throwable)
-    }
+    fun handleException(throwable: Throwable): Boolean = exceptionManager.handleException(throwable)
 
     fun editListeners(consumer: Consumer<ListenerManager>): PacketManager<T> {
         consumer.accept(listenerManager)

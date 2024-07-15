@@ -5,9 +5,11 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "1.2.2"
 
 dependencies {
+    // Add kotlin test
+    testImplementation(kotlin("test"))
+
     // logging
     api("io.github.oshai:kotlin-logging-jvm:5.1.0")
 
@@ -23,7 +25,11 @@ publishing {
     repositories {
         maven {
             name = "utfunderscore"
-            url = uri("https://reposilite.readutf.org/releases")
+            if (version.toString().contains("SNAPSHOT")) {
+                url = uri("https://reposilite.readutf.org/snapshots")
+            } else {
+                url = uri("https://reposilite.readutf.org/releases")
+            }
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")
