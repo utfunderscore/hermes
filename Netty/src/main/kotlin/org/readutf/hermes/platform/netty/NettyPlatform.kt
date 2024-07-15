@@ -45,8 +45,6 @@ abstract class NettyPlatform internal constructor(
             var logger = KotlinLogging.logger {}
 
             override fun initChannel(socketChannel: SocketChannel) {
-                logger.info { "New connection from ${socketChannel.remoteAddress()}" }
-
                 val pipeline = socketChannel.pipeline()
                 pipeline.addLast("decoder", NettyPacketDecoder(serializer))
                 pipeline.addLast("encoder", NettyPacketEncoder(serializer))
