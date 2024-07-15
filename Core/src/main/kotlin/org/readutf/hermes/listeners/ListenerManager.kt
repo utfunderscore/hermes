@@ -70,9 +70,11 @@ class ListenerManager {
             val parameters = function.valueParameters
 
             if (parameters.size == 1) {
-                if (!parameters[0]
-                        .type.jvmErasure.java
-                        .isAssignableFrom(Packet::class.java)
+                if (!Packet::class.java
+                        .isAssignableFrom(
+                            parameters[0]
+                                .type.jvmErasure.java,
+                        )
                 ) {
                     logger.error { "Parameter is not a packet in listener ${function.name}" }
                     return
@@ -97,17 +99,23 @@ class ListenerManager {
             } else if (parameters.size == 2) {
                 val channelIndex =
                     parameters.indexOfFirst { kParameter ->
-                        kParameter.type.jvmErasure.java
-                            .isAssignableFrom(HermesChannel::class.java)
-                    }
-                val packetIndex =
-                    parameters.indexOfFirst { kParameter ->
-                        kParameter.type.jvmErasure.java
-                            .isAssignableFrom(Packet::class.java)
+                        HermesChannel::class.java
+                            .isAssignableFrom(kParameter.type.jvmErasure.java)
                     }
 
-                if (packetIndex == -1 || channelIndex == -1) {
-                    logger.error { "Listener ${function.name} does not have a channel or packet parameter" }
+                val packetIndex =
+                    parameters.indexOfFirst { kParameter ->
+                        Packet::class.java
+                            .isAssignableFrom(kParameter.type.jvmErasure.java)
+                    }
+
+                if (packetIndex == -1) {
+                    logger.error { "Listener ${function.name} does not have a packet parameter" }
+                    return
+                }
+
+                if (channelIndex == -1) {
+                    logger.error { "Listener ${function.name} does not have a channel parameter" }
                     return
                 }
 
