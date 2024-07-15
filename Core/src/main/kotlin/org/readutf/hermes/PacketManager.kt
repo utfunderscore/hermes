@@ -54,7 +54,7 @@ class PacketManager<T : PacketPlatform>(
         hermesChannel: HermesChannel,
         packet: Packet,
     ) {
-        logger.info { "Received packet: $packet" }
+        logger.debug { "Received packet: $packet" }
         listenerManager.invokeListeners(hermesChannel, packet)
     }
 
