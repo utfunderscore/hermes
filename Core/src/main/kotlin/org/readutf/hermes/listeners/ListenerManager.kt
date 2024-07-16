@@ -14,7 +14,7 @@ class ListenerManager {
     private val logger = KotlinLogging.logger { }
     private val listeners = mutableMapOf<Class<out Packet>, MutableList<Listener>>()
 
-    fun invokeListeners(
+    fun handlePacket(
         hermesChannel: HermesChannel,
         packet: Packet,
     ) {
@@ -132,10 +132,14 @@ class ListenerManager {
                         ) {
                             val args = arrayOfNulls<Any>(3)
                             args[0] = scannedObject
-                            args[channelIndex] = hermesChannel
-                            args[packetIndex] = packet
+                            args[channelIndex + 1] = hermesChannel
+                            args[packetIndex + 1] = packet
+
+                            function.call(*args)
                         }
                     }
+
+                logger.info { "Registering $packetType listener '${function.name}" }
 
                 registerListener(packetType, listener)
             }

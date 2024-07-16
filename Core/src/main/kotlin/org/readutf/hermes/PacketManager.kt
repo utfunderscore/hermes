@@ -55,7 +55,7 @@ class PacketManager<T : PacketPlatform>(
         packet: Packet,
     ) {
         logger.debug { "Received packet: $packet" }
-        listenerManager.invokeListeners(hermesChannel, packet)
+        listenerManager.handlePacket(hermesChannel, packet)
     }
 
     fun stop() {
