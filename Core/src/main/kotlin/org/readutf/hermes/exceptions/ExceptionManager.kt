@@ -18,18 +18,17 @@ class ExceptionManager {
     }
 
     fun handleException(throwable: Throwable): Boolean {
-        var handlerFound = false
         val consumer = exceptionHandlers[throwable::class.java]
         if (consumer != null) {
             consumer.accept(throwable)
-            handlerFound = true
+            return true
         }
 
         if (globalExceptionHandler != null) {
             globalExceptionHandler!!.accept(throwable)
-            handlerFound = true
+            return true
         }
 
-        return handlerFound
+        return false
     }
 }
