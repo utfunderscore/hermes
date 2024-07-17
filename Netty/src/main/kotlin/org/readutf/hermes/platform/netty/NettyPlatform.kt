@@ -90,21 +90,23 @@ class NettyServerPlatform(
     private lateinit var thread: Thread
 
     override fun start() {
-        Thread {
-            bootstrap =
-                (bootstrap as ServerBootstrap)
-                    .channel(NioServerSocketChannel::class.java)
-                    .childHandler(getChannelInitializer())
+        thread =
+            Thread {
+                bootstrap =
+                    (bootstrap as ServerBootstrap)
+                        .channel(NioServerSocketChannel::class.java)
+                        .childHandler(getChannelInitializer())
 
-            val channelFuture =
-                bootstrap
-                    .bind(hostName, port)
-                    .sync()
+                val channelFuture =
+                    bootstrap
+                        .bind(hostName, port)
+                        .sync()
 
-            logger.info { "Server started on $hostName:$port" }
+                logger.info { "Server started on $hostName:$port" }
 
-            channelFuture.channel().closeFuture()
-        }.start()
+                channelFuture.channel().closeFuture()
+            }
+        thread.start()
     }
 
     override fun stop() {
