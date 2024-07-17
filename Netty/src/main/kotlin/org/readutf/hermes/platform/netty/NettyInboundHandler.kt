@@ -4,8 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.readutf.hermes.Packet
-import org.readutf.hermes.channel.ChannelRegisterPacket
-import org.readutf.hermes.channel.ChannelUnregisterPacket
+import org.readutf.hermes.channel.ChannelOpenPacket
+import org.readutf.hermes.channel.ChannelClosePacket
 
 class NettyInboundHandler(
     private val packetPlatform: NettyPlatform,
@@ -32,7 +32,7 @@ class NettyInboundHandler(
 
         val hermesChannel = packetPlatform.getChannel(ctx.channel())
 
-        packetPlatform.handlePacket(hermesChannel, ChannelRegisterPacket(hermesChannel))
+        packetPlatform.handlePacket(hermesChannel, ChannelOpenPacket(hermesChannel))
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
@@ -41,7 +41,7 @@ class NettyInboundHandler(
 
         val hermesChannel = packetPlatform.getChannel(ctx.channel())
 
-        packetPlatform.handlePacket(hermesChannel, ChannelUnregisterPacket(hermesChannel))
+        packetPlatform.handlePacket(hermesChannel, ChannelClosePacket(hermesChannel))
 
         packetPlatform.removeChannel(ctx.channel())
     }
