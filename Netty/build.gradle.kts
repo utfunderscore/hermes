@@ -16,11 +16,12 @@ publishing {
     repositories {
         maven {
             name = "utfunderscore"
-            if(version.toString().contains("SNAPSHOT")) {
-                url = uri("https://reposilite.readutf.org/snapshots")
-            } else {
-                url = uri("https://reposilite.readutf.org/releases")
-            }
+            url =
+                if (version.toString().contains("SNAPSHOT")) {
+                    uri("https://reposilite.readutf.org/snapshots")
+                } else {
+                    uri("https://reposilite.readutf.org/releases")
+                }
             credentials(PasswordCredentials::class)
             authentication {
                 create<BasicAuthentication>("basic")

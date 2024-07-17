@@ -88,29 +88,47 @@ class NettyServerPlatform(
         bootstrap,
     ) {
     private lateinit var thread: Thread
+    private lateinit var bossGroup: NioEventLoopGroup
+    private lateinit var workerGroup: NioEventLoopGroup
 
     override fun start() {
+        bossGroup = NioEventLoopGroup()
+        workerGroup = NioEventLoopGroup()
+
         thread =
             Thread {
-                bootstrap =
-                    (bootstrap as ServerBootstrap)
-                        .channel(NioServerSocketChannel::class.java)
-                        .childHandler(getChannelInitializer())
 
-                val channelFuture =
-                    bootstrap
-                        .bind(hostName, port)
-                        .sync()
+                try {
 
-                logger.info { "Server started on $hostName:$port" }
+                    bootstrap =
+                        (bootstrap as ServerBootstrap)
+                            .group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel::class.java)
+                            .childHandler(getChannelInitializer())
 
-                channelFuture.channel().closeFuture()
+                    val channelFuture =
+                        bootstrap
+                            .bind(hostName, port)
+                            .sync()
+
+                    logger.info { "Server started on $hostName:$port" }
+
+                    channelFuture.channel().closeFuture()
+                } catch (e: Exception) {
+                    logger.error(e) { "Exception occurred on main netty thread" }
+                } finally {
+                    bossGroup.shutdownGracefully().get()
+                    workerGroup.shutdownGracefully().get()
+                }
             }
         thread.start()
     }
 
     override fun stop() {
-        if (::thread.isInitialized) thread.interrupt()
+        if (::thread.isInitialized) {
+            logger.debug { "Stopping netty platform thread" }
+            thread.interrupt()
+        }
     }
 }
 
@@ -126,34 +144,49 @@ class NettyClientPlatform(
         bootstrap,
     ) {
     private lateinit var thread: Thread
+    private lateinit var group: NioEventLoopGroup
 
     override fun start() {
+        group = NioEventLoopGroup(1)
+
         val startFuture = CompletableFuture<Channel>()
-        Thread {
-            val channel =
-                (bootstrap as Bootstrap)
-                    .channel(NioSocketChannel::class.java)
-                    .handler(getChannelInitializer())
-                    .connect(hostName, port)
-                    .sync()
-                    .channel()
+        thread =
+            Thread {
+                try {
+                    val channel =
+                        (bootstrap as Bootstrap)
+                            .channel(NioSocketChannel::class.java)
+                            .group(group)
+                            .handler(getChannelInitializer())
+                            .connect(hostName, port)
+                            .sync()
+                            .channel()
 
-            this.channel = channel
+                    this.channel = channel
 
-            startFuture.complete(channel)
+                    startFuture.complete(channel)
 
-            logger.info { "Connected to $hostName:$port" }
+                    logger.info { "Connected to $hostName:$port" }
 
-            channel
-                .closeFuture()
-                .sync()
-        }.start()
+                    channel
+                        .closeFuture()
+                        .sync()
+                } catch (e: Exception) {
+                    logger.error(e) { "Exception occured on main netty thread" }
+                } finally {
+                    group.shutdownGracefully()
+                }
+            }
+        thread.start()
 
         startFuture.join()
     }
 
     override fun stop() {
-        if (::thread.isInitialized) thread.interrupt()
+        if (::thread.isInitialized) {
+            logger.debug { "Stopping netty platform thread" }
+            thread.interrupt()
+        }
     }
 }
 
@@ -161,7 +194,7 @@ fun PacketManager.Companion.nettyServer(
     hostName: String = "localhost",
     port: Int = 4000,
     serializer: PacketSerializer,
-    serverBootstrap: ServerBootstrap = ServerBootstrap().group(NioEventLoopGroup(), NioEventLoopGroup()),
+    serverBootstrap: ServerBootstrap = ServerBootstrap(),
 ): PacketManager<NettyServerPlatform> {
     val platform = NettyServerPlatform(hostName, port, serializer, serverBootstrap)
     return create(platform)
@@ -171,7 +204,7 @@ fun PacketManager.Companion.nettyClient(
     hostName: String = "localhost",
     port: Int = 4000,
     serializer: PacketSerializer,
-    serverBootstrap: Bootstrap = Bootstrap().group(NioEventLoopGroup()),
+    serverBootstrap: Bootstrap = Bootstrap(),
 ): PacketManager<NettyClientPlatform> {
     val platform = NettyClientPlatform(hostName, port, serializer, serverBootstrap)
     return create(platform)
