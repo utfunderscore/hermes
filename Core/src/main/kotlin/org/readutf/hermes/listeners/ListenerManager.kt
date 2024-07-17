@@ -34,7 +34,7 @@ class ListenerManager {
         listeners[clazz] = currentListeners
     }
 
-    inline fun <reified T : Packet> registerListener(typedListener: TypedListener<T>) {
+    inline fun <reified T : Packet, reified U : HermesChannel> registerListener(typedListener: TypedListener<T, U>) {
         registerListener(
             T::class.java,
             object : Listener {
@@ -42,7 +42,7 @@ class ListenerManager {
                     hermesChannel: HermesChannel,
                     packet: Packet,
                 ) {
-                    typedListener.handle(packet as T)
+                    typedListener.handle(packet as T, hermesChannel as U)
                 }
             },
         )
