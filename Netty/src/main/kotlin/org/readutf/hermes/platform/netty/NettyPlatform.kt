@@ -97,9 +97,7 @@ class NettyServerPlatform(
 
         thread =
             Thread {
-
                 try {
-
                     bootstrap =
                         (bootstrap as ServerBootstrap)
                             .group(bossGroup, workerGroup)
@@ -116,9 +114,6 @@ class NettyServerPlatform(
                     channelFuture.channel().closeFuture()
                 } catch (e: Exception) {
                     logger.error(e) { "Exception occurred on main netty thread" }
-                } finally {
-                    bossGroup.shutdownGracefully().get()
-                    workerGroup.shutdownGracefully().get()
                 }
             }
         thread.start()
