@@ -3,8 +3,8 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-// version = "1.3.9-SNAPSHOT-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
-version = "1.3.9"
+version = "1.3.10-SNAPSHOT"
+// version = "1.3.10"
 
 repositories {
     maven { url = uri("https://reposilite.readutf.org/releases") }
