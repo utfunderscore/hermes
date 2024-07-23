@@ -7,5 +7,5 @@ interface TypedListener<T : Packet, U : HermesChannel> {
     fun handle(
         packet: T,
         channel: U,
-    )
+    ): Any
 }

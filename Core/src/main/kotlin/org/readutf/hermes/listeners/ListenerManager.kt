@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.Packet
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.listeners.annotation.PacketHandler
+import org.readutf.hermes.response.ResponsePacket
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
@@ -20,7 +21,12 @@ class ListenerManager {
     ) {
         listeners.entries.forEach { (clazz, packetListeners) ->
             if (clazz.isAssignableFrom(packet.javaClass)) {
-                packetListeners.forEach { listener: Listener -> listener.acceptPacket(hermesChannel, packet) }
+                packetListeners.forEach { listener: Listener ->
+                    val result = listener.acceptPacket(hermesChannel, packet)
+                    if (result == null || result is Unit) return
+
+                    hermesChannel.sendPacket(ResponsePacket(result))
+                }
             }
         }
     }
@@ -90,8 +96,10 @@ class ListenerManager {
                         override fun acceptPacket(
                             hermesChannel: HermesChannel,
                             packet: Packet,
-                        ) {
-                            function.call(scannedObject, packet)
+                        ): Any? {
+                            val result = function.call(scannedObject, packet)
+                            if (result is Unit) return null
+                            return result
                         }
                     }
 
