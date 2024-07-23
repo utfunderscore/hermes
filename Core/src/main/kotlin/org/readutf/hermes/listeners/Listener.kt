@@ -7,5 +7,5 @@ interface Listener {
     fun acceptPacket(
         hermesChannel: HermesChannel,
         packet: Packet,
-    )
+    ): Any?
 }
