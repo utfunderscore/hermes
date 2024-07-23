@@ -32,9 +32,9 @@ class ListenerManagerTest {
     fun registerAll() {
     }
 
-    class TestPacket : Packet
+    class TestPacket : Packet()
 
-    class TestPacket2 : Packet
+    class TestPacket2 : Packet()
 
     class TestListener {
         @PacketHandler
