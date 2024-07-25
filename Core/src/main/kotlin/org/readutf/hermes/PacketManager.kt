@@ -1,14 +1,14 @@
 package org.readutf.hermes
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.util.UUID
-import java.util.concurrent.CompletableFuture
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.exceptions.ExceptionManager
 import org.readutf.hermes.listeners.ListenerManager
 import org.readutf.hermes.platform.PacketPlatform
-import java.util.function.Consumer
+import org.readutf.hermes.response.ResponseListener
 import org.readutf.hermes.response.ResponsePacket
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 class PacketManager<T : PacketPlatform>(
     val packetPlatform: T,
@@ -23,6 +23,9 @@ class PacketManager<T : PacketPlatform>(
             onPacketReceived(channel, packet)
         }
         packetPlatform.init(this)
+        editListeners {
+            it.registerListener(ResponseListener(this))
+        }
     }
 
     fun sendPacket(packet: Packet) {
@@ -35,7 +38,8 @@ class PacketManager<T : PacketPlatform>(
         packetPlatform.sendPacket(packet)
         return future.thenApply { responsePacket ->
             if (responsePacket is T) {
-                responsePacket
+                println("Received back $responsePacket as ${T::class.java.simpleName}")
+                return@thenApply responsePacket
             } else {
                 throw IllegalStateException("Response packet was not of type ${T::class.java.simpleName}")
             }

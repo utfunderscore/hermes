@@ -28,7 +28,7 @@ class NettyInboundHandler(
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         logger.info { "New connection from ${ctx.channel().remoteAddress()}" }
-        packetPlatform.activeChannels.add(ctx.channel())
+        packetPlatform.activeChannels[ctx.channel().id().asLongText()] = ctx.channel()
 
         val hermesChannel = packetPlatform.getChannel(ctx.channel())
 
@@ -37,7 +37,7 @@ class NettyInboundHandler(
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.info { "Connection closed from ${ctx.channel().remoteAddress()}" }
-        packetPlatform.activeChannels.remove(ctx.channel())
+        packetPlatform.activeChannels.remove(ctx.channel().id().asLongText())
 
         val hermesChannel = packetPlatform.getChannel(ctx.channel())
 
