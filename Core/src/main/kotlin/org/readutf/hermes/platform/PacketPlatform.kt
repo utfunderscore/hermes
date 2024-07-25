@@ -13,6 +13,8 @@ interface PacketPlatform {
 
     fun sendPacket(packet: Packet)
 
+    fun getChannel(channelId: String): HermesChannel?
+
     fun setSerializer(serializer: PacketSerializer)
 
     fun handleException(throwable: Throwable) {
