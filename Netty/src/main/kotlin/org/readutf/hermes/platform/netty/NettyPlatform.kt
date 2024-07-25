@@ -27,14 +27,16 @@ abstract class NettyPlatform internal constructor(
 ) : ChannelInboundHandlerAdapter(),
     PacketPlatform {
     val logger = KotlinLogging.logger { }
+
     private var thread: Thread? = null
     private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
     lateinit var channel: Channel
     lateinit var packetManager: PacketManager<NettyPlatform>
 
     private val channelMap = mutableMapOf<Channel, HermesChannel>()
+    private val channelIdMap = mutableMapOf<String, HermesChannel>()
 
-    var activeChannels = mutableSetOf<Channel>()
+    var activeChannels = mutableMapOf<String, Channel>()
 
     override fun init(packetManager: PacketManager<*>) {
         this.packetManager = packetManager as PacketManager<NettyPlatform>
@@ -59,12 +61,16 @@ abstract class NettyPlatform internal constructor(
         if (::packetConsumer.isInitialized) packetConsumer.accept(hermesChannel, packet)
     }
 
-    fun getChannel(channel: Channel): HermesChannel = channelMap.getOrPut(channel) { NettyHermesChannel(channel) }
+    fun getChannel(channel: Channel): HermesChannel = channelMap.getOrPut(channel) { NettyHermesChannel(channel, packetManager) }
 
     fun removeChannel(channel: Channel) = channelMap.remove(channel)
 
     override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>) {
         this.packetConsumer = packetConsumer
+    }
+
+    override fun getChannel(channelId: String): HermesChannel? {
+        return channelIdMap[channelId]
     }
 
     override fun sendPacket(packet: Packet) {
