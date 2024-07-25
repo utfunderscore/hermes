@@ -25,6 +25,7 @@ class ListenerManager {
                     val result = listener.acceptPacket(hermesChannel, packet)
                     if (result == null || result is Unit) return
 
+                    logger.info { "Sending response to packet" }
                     hermesChannel.sendPacket(ResponsePacket(result))
                 }
             }
@@ -47,8 +48,8 @@ class ListenerManager {
                 override fun acceptPacket(
                     hermesChannel: HermesChannel,
                     packet: Packet,
-                ) {
-                    typedListener.handle(packet as T, hermesChannel as U)
+                ): Any {
+                    return typedListener.handle(packet as T, hermesChannel as U)
                 }
             },
         )
