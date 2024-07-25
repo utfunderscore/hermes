@@ -14,6 +14,5 @@ class ResponseListener(
         val responseFutures = packetManager.responseFutures
 
         responseFutures[packet.packetId]?.complete(packet)
-
     }
 }
