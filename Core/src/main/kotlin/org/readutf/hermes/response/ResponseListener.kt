@@ -7,22 +7,26 @@ import org.readutf.hermes.listeners.TypedListener
 
 class ResponseListener(
     private val packetManager: PacketManager<*>,
-) : TypedListener<ResponsePacket, HermesChannel> {
+) : TypedListener<ResponsePacket, HermesChannel, Unit> {
     private val logger = KotlinLogging.logger { }
 
     override fun handle(
         packet: ResponsePacket,
         channel: HermesChannel,
     ) {
-        logger.info { "Received response packet ${packet.originalId}" }
+        logger.debug { "Received response packet ${packet.originalId}" }
 
         val future = packetManager.responseFutures[packet.originalId]
 
         if (future != null) {
-            println("Completing future with $packet")
-            future.complete(packet)
+            try {
+                logger.debug { "Completing future with ${packet.response}" }
+                future.complete(packet)
+            } catch (exception: Exception) {
+                logger.error(exception) { "Error completing future" }
+            }
         } else {
-            println("No future found")
+            logger.debug { "No future found" }
         }
     }
 }

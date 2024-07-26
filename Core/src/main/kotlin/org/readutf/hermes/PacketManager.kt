@@ -13,7 +13,7 @@ import java.util.function.Consumer
 class PacketManager<T : PacketPlatform>(
     val packetPlatform: T,
 ) {
-    private val logger = KotlinLogging.logger { }
+    val logger = KotlinLogging.logger { }
     private val listenerManager = ListenerManager()
     private val exceptionManager = ExceptionManager()
     val responseFutures = mutableMapOf<Int, CompletableFuture<ResponsePacket>>()
@@ -38,7 +38,7 @@ class PacketManager<T : PacketPlatform>(
         packetPlatform.sendPacket(packet)
         return future.thenApply { responsePacket ->
             if (responsePacket is T) {
-                println("Received back $responsePacket as ${T::class.java.simpleName}")
+                logger.debug { "Received back $responsePacket as ${T::class.java.simpleName}" }
                 return@thenApply responsePacket
             } else {
                 throw IllegalStateException("Response packet was not of type ${T::class.java.simpleName}")
