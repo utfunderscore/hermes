@@ -1,5 +1,6 @@
 package org.readutf.hermes.channel
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.Packet
 import org.readutf.hermes.PacketManager
 import org.readutf.hermes.response.ResponsePacket
@@ -9,19 +10,31 @@ abstract class HermesChannel(
     val channelId: String,
     val packetManager: PacketManager<*>,
 ) {
+    val logger = KotlinLogging.logger {}
+
     abstract fun sendPacket(packet: Packet)
 
     inline fun <reified T> sendPacketFuture(packet: Packet): CompletableFuture<T> {
-        val future = CompletableFuture<ResponsePacket>()
+        val storedFuture = CompletableFuture<ResponsePacket>()
 
-        println("storing ${packet.packetId}")
+        logger.debug { "storing ${packet.packetId}" }
 
-        packetManager.responseFutures[packet.packetId] = future
+        packetManager.responseFutures[packet.packetId] = storedFuture
         sendPacket(packet)
 
-        return future.thenApply {
-            println("test $it")
-            return@thenApply it as T
+        val packetFuture = CompletableFuture<T>()
+
+        storedFuture.thenAccept {
+            try {
+                logger.debug { "Completing future with ${it.response.javaClass.simpleName} as ${T::class.java.simpleName}" }
+
+                packetFuture.complete(it.response as T)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                packetFuture.completeExceptionally(e)
+            }
         }
+
+        return packetFuture
     }
 }

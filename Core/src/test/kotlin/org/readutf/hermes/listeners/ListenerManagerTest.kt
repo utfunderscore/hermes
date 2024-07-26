@@ -1,5 +1,6 @@
 package org.readutf.hermes.listeners
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.readutf.hermes.Packet
@@ -7,6 +8,7 @@ import org.readutf.hermes.listeners.annotation.PacketHandler
 
 class ListenerManagerTest {
     private var listenerManager: ListenerManager = ListenerManager()
+    private var logger = KotlinLogging.logger { }
 
     @BeforeEach
     fun beforeEach() {

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "1.4.17"
+version = "1.5.0"
 
 repositories {
     maven { url = uri("https://reposilite.readutf.org/releases") }

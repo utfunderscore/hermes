@@ -22,10 +22,13 @@ class ListenerManager {
         listeners.entries.forEach { (clazz, packetListeners) ->
             if (clazz.isAssignableFrom(packet.javaClass)) {
                 packetListeners.forEach { listener: Listener ->
+                    logger.debug { "Handling packet with listener ${listener.javaClass.name}" }
                     val result = listener.acceptPacket(hermesChannel, packet)
+                    logger.debug { "Sending listener result $result" }
+
                     if (result == null || result is Unit) return
 
-                    logger.info { "Sending response to packet" }
+                    logger.debug { "Sending response to packet" }
                     hermesChannel.sendPacket(ResponsePacket(result, packet.packetId))
                 }
             }
@@ -41,14 +44,14 @@ class ListenerManager {
         listeners[clazz] = currentListeners
     }
 
-    inline fun <reified T : Packet, reified U : HermesChannel> registerListener(typedListener: TypedListener<T, U>) {
+    inline fun <reified T : Packet, reified U : HermesChannel, V> registerListener(typedListener: TypedListener<T, U, V>) {
         registerListener(
             T::class.java,
             object : Listener {
                 override fun acceptPacket(
                     hermesChannel: HermesChannel,
                     packet: Packet,
-                ): Any = typedListener.handle(packet as T, hermesChannel as U)
+                ): V = typedListener.handle(packet as T, hermesChannel as U)
             },
         )
     }
