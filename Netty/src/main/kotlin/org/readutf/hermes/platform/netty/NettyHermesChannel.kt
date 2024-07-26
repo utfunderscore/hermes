@@ -10,6 +10,7 @@ class NettyHermesChannel(
     packetManager: PacketManager<NettyPlatform>,
 ) : HermesChannel(channelId = channel.id().asLongText(), packetManager) {
     override fun sendPacket(packet: Packet) {
+        logger.debug { "Sending packet: $packet" }
         channel.writeAndFlush(packet)
     }
 }
