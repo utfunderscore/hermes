@@ -28,7 +28,6 @@ abstract class NettyPlatform internal constructor(
     PacketPlatform {
     val logger = KotlinLogging.logger { }
 
-    private var thread: Thread? = null
     private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
     lateinit var channel: Channel
     lateinit var packetManager: PacketManager<NettyPlatform>
