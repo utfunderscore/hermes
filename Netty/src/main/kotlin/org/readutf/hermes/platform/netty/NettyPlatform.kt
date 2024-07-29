@@ -157,13 +157,18 @@ class NettyClientPlatform(
             Thread( {
                 try {
                     val channel =
-                        (bootstrap as Bootstrap)
-                            .channel(NioSocketChannel::class.java)
-                            .group(group)
-                            .handler(getChannelInitializer())
-                            .connect(hostName, port)
-                            .sync()
-                            .channel()
+                        try {
+                            (bootstrap as Bootstrap)
+                                .channel(NioSocketChannel::class.java)
+                                .group(group)
+                                .handler(getChannelInitializer())
+                                .connect(hostName, port)
+                                .sync()
+                                .channel()
+                        } catch (e: Exception) {
+                            startFuture.completeExceptionally(e)
+                            return@Thread
+                        }
 
                     this.channel = channel
 
