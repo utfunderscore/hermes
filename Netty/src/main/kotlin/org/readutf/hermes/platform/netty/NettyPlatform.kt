@@ -69,9 +69,7 @@ abstract class NettyPlatform internal constructor(
         this.packetConsumer = packetConsumer
     }
 
-    override fun getChannel(channelId: String): HermesChannel? {
-        return channelIdMap[channelId]
-    }
+    override fun getChannel(channelId: String): HermesChannel? = channelIdMap[channelId]
 
     override fun sendPacket(packet: Packet) {
         if (::channel.isInitialized) {
