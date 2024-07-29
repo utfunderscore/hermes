@@ -74,7 +74,9 @@ abstract class NettyPlatform internal constructor(
     }
 
     override fun sendPacket(packet: Packet) {
-        channel.writeAndFlush(packet)
+        if (::channel.isInitialized) {
+            channel.writeAndFlush(packet)
+        }
     }
 
     override fun setSerializer(serializer: PacketSerializer) {
