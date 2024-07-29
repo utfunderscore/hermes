@@ -104,7 +104,7 @@ class NettyServerPlatform(
         workerGroup = NioEventLoopGroup()
 
         thread =
-            Thread {
+            Thread({
                 try {
                     bootstrap =
                         (bootstrap as ServerBootstrap)
@@ -123,7 +123,7 @@ class NettyServerPlatform(
                 } catch (e: Exception) {
                     logger.error(e) { "Exception occurred on main netty thread" }
                 }
-            }
+            }, "Hermes-Netty-Thread")
         thread.start()
     }
 
@@ -154,7 +154,7 @@ class NettyClientPlatform(
 
         val startFuture = CompletableFuture<Channel>()
         thread =
-            Thread {
+            Thread( {
                 try {
                     val channel =
                         (bootstrap as Bootstrap)
@@ -179,7 +179,7 @@ class NettyClientPlatform(
                 } finally {
                     group.shutdownGracefully()
                 }
-            }
+            }, "Hermes-Client-Thread")
         thread.start()
 
         startFuture.join()
