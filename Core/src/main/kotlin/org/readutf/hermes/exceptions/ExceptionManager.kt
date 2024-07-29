@@ -24,6 +24,10 @@ class ExceptionManager {
             return true
         }
 
+        exceptionHandlers
+            .filter { (clazz, consumer) -> clazz.isAssignableFrom(throwable.javaClass) }
+            .forEach { (clazz, consumer) -> consumer.accept(throwable) }
+
         if (globalExceptionHandler != null) {
             globalExceptionHandler!!.accept(throwable)
             return true

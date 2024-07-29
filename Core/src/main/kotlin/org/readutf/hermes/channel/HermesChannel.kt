@@ -22,19 +22,17 @@ abstract class HermesChannel(
         packetManager.responseFutures[packet.packetId] = storedFuture
         sendPacket(packet)
 
-        val packetFuture = CompletableFuture<T>()
+        var packetFuture = CompletableFuture<T>()
 
-        storedFuture.thenAccept {
+        return storedFuture.thenApply {
             try {
                 logger.debug { "Completing future with ${it.response.javaClass.simpleName} as ${T::class.java.simpleName}" }
 
-                packetFuture.complete(it.response as T)
+                return@thenApply it.response as T
             } catch (e: Exception) {
                 e.printStackTrace()
-                packetFuture.completeExceptionally(e)
+                throw e
             }
         }
-
-        return packetFuture
     }
 }
