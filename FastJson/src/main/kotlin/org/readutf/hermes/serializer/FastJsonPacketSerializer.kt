@@ -3,10 +3,11 @@ package org.readutf.hermes.serializer
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
 import org.readutf.hermes.Packet
-import panda.std.Result
+
+import org.readutf.hermes.utils.Result
 
 class FastJsonPacketSerializer : PacketSerializer {
-    override fun serialize(packet: Packet): Result<ByteArray, String> =
+    override fun serialize(packet: Packet): Result<ByteArray> =
         try {
             Result.ok(
                 JSON.toJSONBytes(
@@ -20,7 +21,7 @@ class FastJsonPacketSerializer : PacketSerializer {
             Result.error(e.message ?: "Failed to serialize packet")
         }
 
-    override fun deserialize(bytes: ByteArray): Result<Packet, String> {
+    override fun deserialize(bytes: ByteArray): Result<Packet> {
         val jsonObject: JSONObject = JSON.parseObject(bytes)
 
         val className = jsonObject.getString("class")

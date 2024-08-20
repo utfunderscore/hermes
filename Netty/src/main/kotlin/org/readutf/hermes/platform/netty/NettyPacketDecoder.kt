@@ -32,8 +32,8 @@ class NettyPacketDecoder(
         buffer.readBytes(bytes)
 
         val packetResult = packetSerializer.deserialize(bytes)
-        if (packetResult.isErr) {
-            logger.warn { "Failed to deserialize packet: ${packetResult.error}" }
+        if (packetResult.isError()) {
+            logger.warn { "Failed to deserialize packet: ${packetResult.getError()}" }
             buffer.resetReaderIndex()
             return
         }

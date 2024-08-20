@@ -19,8 +19,8 @@ class NettyPacketEncoder(
         val serializedResult = packetSerializer.serialize(packet)
         val logger = KotlinLogging.logger { }
 
-        if (serializedResult.isErr) {
-            logger.error { "Failed to serialize packet: ${serializedResult.error}" }
+        if (serializedResult.isError()) {
+            logger.error { "Failed to serialize packet: ${serializedResult.getError()}" }
             return
         }
 
