@@ -8,10 +8,12 @@ import org.readutf.hermes.platform.PacketPlatform
 import org.readutf.hermes.response.ResponseListener
 import org.readutf.hermes.response.ResponsePacket
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
 import java.util.function.Consumer
 
 class PacketManager<T : PacketPlatform>(
     val packetPlatform: T,
+    val executorService: ExecutorService,
 ) {
     val logger = KotlinLogging.logger { }
     private val listenerManager = ListenerManager()
@@ -36,14 +38,14 @@ class PacketManager<T : PacketPlatform>(
         val future = CompletableFuture<ResponsePacket>()
         responseFutures[packet.packetId] = future
         packetPlatform.sendPacket(packet)
-        return future.thenApply { responsePacket ->
+        return future.thenApplyAsync({ responsePacket ->
             if (responsePacket is T) {
                 logger.debug { "Received back $responsePacket as ${T::class.java.simpleName}" }
-                return@thenApply responsePacket
+                return@thenApplyAsync responsePacket
             } else {
                 throw IllegalStateException("Response packet was not of type ${T::class.java.simpleName}")
             }
-        }
+        }, executorService)
     }
 
     fun start(): PacketManager<T> {
@@ -84,6 +86,9 @@ class PacketManager<T : PacketPlatform>(
     }
 
     companion object {
-        fun <T : PacketPlatform> create(platform: T): PacketManager<T> = PacketManager(platform)
+        fun <T : PacketPlatform> create(
+            platform: T,
+            executorService: ExecutorService,
+        ): PacketManager<T> = PacketManager(platform, executorService)
     }
 }

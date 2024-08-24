@@ -5,13 +5,16 @@ import org.readutf.hermes.Packet
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.listeners.annotation.PacketHandler
 import org.readutf.hermes.response.ResponsePacket
+import java.util.concurrent.ExecutorService
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.jvmErasure
 
-class ListenerManager {
+class ListenerManager(
+    val executorService: ExecutorService,
+) {
     private val logger = KotlinLogging.logger { }
     private val listeners = mutableMapOf<Class<out Packet>, MutableList<Listener>>()
 
@@ -19,17 +22,19 @@ class ListenerManager {
         hermesChannel: HermesChannel,
         packet: Packet,
     ) {
-        listeners.entries.forEach { (clazz, packetListeners) ->
-            if (clazz.isAssignableFrom(packet.javaClass)) {
-                packetListeners.forEach { listener: Listener ->
-                    logger.debug { "Handling packet with listener ${listener.javaClass.name}" }
-                    val result = listener.acceptPacket(hermesChannel, packet)
-                    logger.debug { "Sending listener result $result" }
+        executorService.submit {
+            listeners.entries.forEach { (clazz, packetListeners) ->
+                if (clazz.isAssignableFrom(packet.javaClass)) {
+                    packetListeners.forEach { listener: Listener ->
+                        logger.debug { "Handling packet with listener ${listener.javaClass.name}" }
+                        val result = listener.acceptPacket(hermesChannel, packet)
+                        logger.debug { "Sending listener result $result" }
 
-                    if (result == null || result is Unit) return
+                        if (result == null || result is Unit) return@submit
 
-                    logger.debug { "Sending response to packet" }
-                    hermesChannel.sendPacket(ResponsePacket(result, packet.packetId))
+                        logger.debug { "Sending response to packet" }
+                        hermesChannel.sendPacket(ResponsePacket(result, packet.packetId))
+                    }
                 }
             }
         }
