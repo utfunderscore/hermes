@@ -4,8 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.readutf.hermes.Packet
-import org.readutf.hermes.channel.ChannelOpenPacket
 import org.readutf.hermes.channel.ChannelClosePacket
+import org.readutf.hermes.channel.ChannelOpenPacket
 
 class NettyInboundHandler(
     private val packetPlatform: NettyPlatform,
