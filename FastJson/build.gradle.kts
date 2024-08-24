@@ -15,7 +15,7 @@ publishing {
     repositories {
         maven {
             name = "utfunderscore"
-            if(version.toString().contains("SNAPSHOT")) {
+            if (version.toString().contains("SNAPSHOT")) {
                 url = uri("https://reposilite.readutf.org/snapshots")
             } else {
                 url = uri("https://reposilite.readutf.org/releases")

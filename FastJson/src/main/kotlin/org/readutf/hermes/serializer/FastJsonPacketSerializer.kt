@@ -3,7 +3,6 @@ package org.readutf.hermes.serializer
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
 import org.readutf.hermes.Packet
-
 import org.readutf.hermes.utils.Result
 
 class FastJsonPacketSerializer : PacketSerializer {
