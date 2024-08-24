@@ -17,6 +17,8 @@ import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.platform.PacketPlatform
 import org.readutf.hermes.serializer.PacketSerializer
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ForkJoinPool
 import java.util.function.BiConsumer
 
 abstract class NettyPlatform internal constructor(
@@ -151,7 +153,7 @@ class NettyClientPlatform(
 
         val startFuture = CompletableFuture<Channel>()
         thread =
-            Thread( {
+            Thread({
                 try {
                     val channel =
                         try {
@@ -200,9 +202,10 @@ fun PacketManager.Companion.nettyServer(
     port: Int = 4000,
     serializer: PacketSerializer,
     serverBootstrap: ServerBootstrap = ServerBootstrap(),
+    executorService: ExecutorService = ForkJoinPool.commonPool(),
 ): PacketManager<NettyServerPlatform> {
     val platform = NettyServerPlatform(hostName, port, serializer, serverBootstrap)
-    return create(platform)
+    return create(platform, executorService)
 }
 
 fun PacketManager.Companion.nettyClient(
@@ -210,7 +213,8 @@ fun PacketManager.Companion.nettyClient(
     port: Int = 4000,
     serializer: PacketSerializer,
     serverBootstrap: Bootstrap = Bootstrap(),
+    executorService: ExecutorService = ForkJoinPool.commonPool(),
 ): PacketManager<NettyClientPlatform> {
     val platform = NettyClientPlatform(hostName, port, serializer, serverBootstrap)
-    return create(platform)
+    return create(platform, executorService)
 }
