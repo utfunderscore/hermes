@@ -16,7 +16,7 @@ class PacketManager<T : PacketPlatform>(
     val executorService: ExecutorService,
 ) {
     val logger = KotlinLogging.logger { }
-    private val listenerManager = ListenerManager()
+    private val listenerManager = ListenerManager(executorService)
     private val exceptionManager = ExceptionManager()
     val responseFutures = mutableMapOf<Int, CompletableFuture<ResponsePacket>>()
 

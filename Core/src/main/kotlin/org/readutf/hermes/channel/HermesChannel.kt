@@ -24,15 +24,15 @@ abstract class HermesChannel(
 
         var packetFuture = CompletableFuture<T>()
 
-        return storedFuture.thenApply {
+        return storedFuture.thenApplyAsync({
             try {
                 logger.debug { "Completing future with ${it.response.javaClass.simpleName} as ${T::class.java.simpleName}" }
 
-                return@thenApply it.response as T
+                return@thenApplyAsync it.response as T
             } catch (e: Exception) {
                 e.printStackTrace()
                 throw e
             }
-        }
+        }, packetManager.executorService)
     }
 }
