@@ -2,10 +2,13 @@ package org.readutf.hermes.serializer
 
 import com.alibaba.fastjson2.JSON
 import com.alibaba.fastjson2.JSONObject
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.Packet
 import org.readutf.hermes.utils.Result
 
 class FastJsonPacketSerializer : PacketSerializer {
+    private val logger = KotlinLogging.logger { }
+
     override fun serialize(packet: Packet): Result<ByteArray> =
         try {
             Result.ok(
@@ -17,6 +20,7 @@ class FastJsonPacketSerializer : PacketSerializer {
                 ),
             )
         } catch (e: Exception) {
+            logger.error(e) { "Failed to serialize packet" }
             Result.error(e.message ?: "Failed to serialize packet")
         }
 
@@ -29,6 +33,7 @@ class FastJsonPacketSerializer : PacketSerializer {
         return try {
             Result.ok(JSON.parseObject(data.toString(), Class.forName(className)) as Packet)
         } catch (e: Exception) {
+            logger.error(e) { "Failed to deserialize packet" }
             Result.error(e.message ?: "Failed to deserialize packet")
         }
     }
