@@ -18,9 +18,9 @@ publishing {
             name = "utfunderscore"
             url =
                 if (version.toString().contains("SNAPSHOT")) {
-                    uri("https://reposilite.readutf.org/snapshots")
+                    uri("https://repo.readutf.org/snapshots")
                 } else {
-                    uri("https://reposilite.readutf.org/releases")
+                    uri("https://repo.readutf.org/releases")
                 }
             credentials(PasswordCredentials::class)
             authentication {
