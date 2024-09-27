@@ -30,7 +30,7 @@ abstract class HermesChannel(
 
                 return@thenApplyAsync it.response as T
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.error { "Failed to cast response to ${T::class.java.simpleName}" }
                 throw e
             }
         }, packetManager.executorService)
