@@ -20,8 +20,6 @@ class KryoPacketSerializer(
                     Output(outputStream).use { output ->
                         kryo.writeClassAndObject(output, packet)
                     }
-
-                    logger.info { outputStream.toByteArray().contentToString() }
                     return@use outputStream.toByteArray()
                 },
             )
@@ -33,7 +31,6 @@ class KryoPacketSerializer(
 
     override fun deserialize(bytes: ByteArray): Result<Packet> =
         try {
-            logger.info { bytes.contentToString() }
             Result.ok(kryo.readClassAndObject(Input(bytes)) as Packet)
         } catch (e: Exception) {
             logger.error(e) { "Failed to deserialize packet" }
