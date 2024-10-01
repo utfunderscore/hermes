@@ -17,8 +17,7 @@ class NettyPacketDecoder(
         buffer: ByteBuf,
         packets: MutableList<Any>,
     ) {
-        if (buffer.readableBytes() < 2) {
-            buffer.resetReaderIndex()
+        if (buffer.readableBytes() < 4) {
             return
         }
 
@@ -31,10 +30,11 @@ class NettyPacketDecoder(
         val bytes = ByteArray(length)
         buffer.readBytes(bytes)
 
+        logger.info { "Received packet: ${bytes.contentToString()}" }
+
         val packetResult = packetSerializer.deserialize(bytes)
         if (packetResult.isError()) {
             logger.warn { "Failed to deserialize packet: ${packetResult.getError()}" }
-            buffer.resetReaderIndex()
             return
         }
 
