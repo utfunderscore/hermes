@@ -3,13 +3,14 @@ package org.readutf.hermes.serializer
 import com.esotericsoftware.kryo.kryo5.Kryo
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
+import com.esotericsoftware.kryo.kryo5.util.Pool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.Packet
 import org.readutf.hermes.utils.Result
 import java.io.ByteArrayOutputStream
 
 class KryoPacketSerializer(
-    private val kryo: Kryo,
+    private val kryoPool: Pool<Kryo>,
 ) : PacketSerializer {
     private val logger = KotlinLogging.logger { }
 
@@ -18,7 +19,9 @@ class KryoPacketSerializer(
             Result.ok(
                 ByteArrayOutputStream().use { outputStream ->
                     Output(outputStream).use { output ->
+                        val kryo = kryoPool.obtain()
                         kryo.writeClassAndObject(output, packet)
+                        kryoPool.free(kryo)
                     }
                     return@use outputStream.toByteArray()
                 },
@@ -29,11 +32,17 @@ class KryoPacketSerializer(
         }
     }
 
-    override fun deserialize(bytes: ByteArray): Result<Packet> =
-        try {
-            Result.ok(kryo.readClassAndObject(Input(bytes)) as Packet)
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to deserialize packet" }
-            Result.error(e.message ?: "Failed to deserialize packet")
+    override fun deserialize(bytes: ByteArray): Result<Packet> {
+        synchronized(kryoPool) {
+            try {
+                val kryo = kryoPool.obtain()
+                val packet = kryo.readClassAndObject(Input(bytes)) as Packet
+                kryoPool.free(kryo)
+                return Result.ok(packet)
+            } catch (e: Exception) {
+                logger.error(e) { "Failed to deserialize packet array = ${bytes.contentToString()}" }
+                return Result.error(e.message ?: "Failed to deserialize packet")
+            }
         }
+    }
 }
