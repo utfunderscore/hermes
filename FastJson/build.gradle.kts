@@ -37,6 +37,10 @@ publishing {
     }
 }
 
+java {
+    withSourcesJar()
+}
+
 tasks.test {
     useJUnitPlatform()
 }
