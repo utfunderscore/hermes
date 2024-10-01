@@ -45,8 +45,6 @@ abstract class NettyPlatform internal constructor(
 
     fun getChannelInitializer(): ChannelInitializer<SocketChannel> =
         object : ChannelInitializer<SocketChannel>() {
-            var logger = KotlinLogging.logger {}
-
             override fun initChannel(socketChannel: SocketChannel) {
                 val pipeline = socketChannel.pipeline()
                 pipeline.addLast("decoder", NettyPacketDecoder(serializer))
@@ -171,9 +169,8 @@ class NettyClientPlatform(
 
                     this.channel = channel
 
-                    startFuture.complete(channel)
-
                     logger.info { "Connected to $hostName:$port" }
+                    startFuture.complete(channel)
 
                     channel
                         .closeFuture()
