@@ -14,6 +14,8 @@ abstract class HermesChannel(
 
     abstract fun sendPacket(packet: Packet)
 
+    abstract fun close()
+
     inline fun <reified T> sendPacketFuture(packet: Packet): CompletableFuture<T> {
         val storedFuture = CompletableFuture<ResponsePacket>()
 
