@@ -13,4 +13,9 @@ class NettyHermesChannel(
         logger.debug { "Sending packet: $packet" }
         channel.writeAndFlush(packet)
     }
+
+    override fun close() {
+        channel.flush()
+        channel.close()
+    }
 }
