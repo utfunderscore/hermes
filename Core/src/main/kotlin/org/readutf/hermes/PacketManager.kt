@@ -38,14 +38,19 @@ class PacketManager<T : PacketPlatform>(
         val future = CompletableFuture<ResponsePacket>()
         responseFutures[packet.packetId] = future
         packetPlatform.sendPacket(packet)
-        return future.thenApplyAsync({ responsePacket ->
-            if (responsePacket is T) {
+
+        return future.thenApply { responsePacket ->
+            logger.info { "expected response type is ${T::class.java}" }
+            logger.info { "received response type is ${responsePacket.response.javaClass}" }
+
+            if (responsePacket.response is T) {
                 logger.debug { "Received back $responsePacket as ${T::class.java.simpleName}" }
-                return@thenApplyAsync responsePacket
+                return@thenApply responsePacket.response
             } else {
+                logger.warn { "Response packet was not of type ${T::class.java.simpleName}" }
                 throw IllegalStateException("Response packet was not of type ${T::class.java.simpleName}")
             }
-        }, executorService)
+        }
     }
 
     fun start(): PacketManager<T> {
@@ -68,8 +73,8 @@ class PacketManager<T : PacketPlatform>(
 
     fun handleException(throwable: Throwable): Boolean = exceptionManager.handleException(throwable)
 
-    fun editListeners(consumer: Consumer<ListenerManager>): PacketManager<T> {
-        consumer.accept(listenerManager)
+    fun editListeners(consumer: (ListenerManager) -> Unit): PacketManager<T> {
+        consumer(listenerManager)
         return this
     }
 
