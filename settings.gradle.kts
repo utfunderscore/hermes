@@ -10,14 +10,14 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-rootProject.name = "Hermes"
+rootProject.name = "hermes"
 
-include("Core")
+include("core")
 
 // Networking Libraries
-include("Netty")
+include("netty")
 
 // Packet Serialization Libraries
-include("Kryo")
-include("FastJson")
-include("Jackson")
+include("kryo")
+include("fastJson")
+include("jackson")
