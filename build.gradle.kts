@@ -21,6 +21,7 @@ subprojects {
     apply(plugin = "java")
     apply(plugin = "com.vanniktech.maven.publish")
     apply(plugin = "kotlin")
+    apply(plugin = "maven-publish")
 
     java {
         withSourcesJar()
@@ -35,7 +36,6 @@ subprojects {
     repositories {
         mavenCentral()
     }
-
 
     mavenPublishing {
 
