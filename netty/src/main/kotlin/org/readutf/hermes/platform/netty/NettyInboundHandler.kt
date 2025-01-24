@@ -16,6 +16,8 @@ class NettyInboundHandler(
         ctx: ChannelHandlerContext,
         msg: Any?,
     ) {
+        logger.debug { "Received packet $msg" }
+
         if (msg !is Packet) {
             logger.warn { "Received unknown message: $msg" }
             return
