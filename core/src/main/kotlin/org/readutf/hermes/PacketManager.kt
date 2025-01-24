@@ -40,8 +40,7 @@ class PacketManager<T : PacketPlatform>(
         packetPlatform.sendPacket(packet)
 
         return future.thenApply { responsePacket ->
-            logger.info { "expected response type is ${T::class.java}" }
-            logger.info { "received response type is ${responsePacket.response.javaClass}" }
+            logger.debug { "Received response back for packet ${packet.packetId}" }
 
             if (responsePacket.response is T) {
                 logger.debug { "Received back $responsePacket as ${T::class.java.simpleName}" }

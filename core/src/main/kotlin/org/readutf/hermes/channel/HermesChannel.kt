@@ -27,12 +27,13 @@ abstract class HermesChannel(
         var packetFuture = CompletableFuture<T>()
 
         return storedFuture.thenApplyAsync({
+            val response = it.response
             try {
-                logger.debug { "Completing future with ${it.response.javaClass.simpleName} as ${T::class.java.simpleName}" }
+                logger.debug { "Completing future with ${response.javaClass.simpleName} as ${T::class.java.simpleName}" }
 
-                return@thenApplyAsync it.response as T
+                return@thenApplyAsync response as T
             } catch (e: Exception) {
-                logger.error { "Failed to cast response to ${T::class.java.simpleName}" }
+                logger.error(e) { "Failed to cast response from ${response::class.java.simpleName} to ${T::class.java.simpleName}" }
                 throw e
             }
         }, packetManager.executorService)

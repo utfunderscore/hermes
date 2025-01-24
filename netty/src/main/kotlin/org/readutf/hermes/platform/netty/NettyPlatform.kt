@@ -70,9 +70,14 @@ abstract class NettyPlatform internal constructor(
 
     override fun getChannel(channelId: String): HermesChannel? = channelIdMap[channelId]
 
+    fun getChannels(): Collection<Channel> = activeChannels.values
+
     override fun sendPacket(packet: Packet) {
         if (::channel.isInitialized) {
+            logger.debug { "Writing packet $packet and flushing..." }
             channel.writeAndFlush(packet)
+        } else {
+            logger.warn { "Channel not initialized, cannot send packet" }
         }
     }
 
