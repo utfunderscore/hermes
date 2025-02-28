@@ -30,7 +30,7 @@ abstract class NettyPlatform internal constructor(
     PacketPlatform {
     val logger = KotlinLogging.logger { }
 
-    private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
+    private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet<*>>
     lateinit var channel: Channel
     lateinit var packetManager: PacketManager<NettyPlatform>
 
@@ -55,7 +55,7 @@ abstract class NettyPlatform internal constructor(
 
     fun handlePacket(
         hermesChannel: HermesChannel,
-        packet: Packet,
+        packet: Packet<*>,
     ) {
         if (::packetConsumer.isInitialized) packetConsumer.accept(hermesChannel, packet)
     }
@@ -64,7 +64,7 @@ abstract class NettyPlatform internal constructor(
 
     fun removeChannel(channel: Channel) = channelMap.remove(channel)
 
-    override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>) {
+    override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet<*>>) {
         this.packetConsumer = packetConsumer
     }
 
@@ -72,7 +72,7 @@ abstract class NettyPlatform internal constructor(
 
     fun getChannels(): Collection<Channel> = activeChannels.values
 
-    override fun sendPacket(packet: Packet) {
+    override fun sendPacket(packet: Packet<*>) {
         if (::channel.isInitialized) {
             logger.debug { "Writing packet $packet and flushing..." }
             channel.writeAndFlush(packet)

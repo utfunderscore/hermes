@@ -1,5 +1,6 @@
 package org.readutf.hermes.platform.netty
 
+import com.github.michaelbull.result.getOrElse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
@@ -9,23 +10,22 @@ import org.readutf.hermes.serializer.PacketSerializer
 
 class NettyPacketEncoder(
     private val packetSerializer: PacketSerializer,
-) : MessageToByteEncoder<Packet>() {
+) : MessageToByteEncoder<Packet<*>>() {
     override fun encode(
         context: ChannelHandlerContext,
-        packet: Packet,
+        packet: Packet<*>,
         byteBuf: ByteBuf,
     ) {
         val serializedResult = packetSerializer.serialize(packet)
         val logger = KotlinLogging.logger { }
 
-        if (serializedResult.isError()) {
-            logger.error { "Failed to serialize packet: ${serializedResult.getError()}" }
-            return
-        }
+        val byteArray =
+            serializedResult.getOrElse { err ->
+                logger.error(err) { "Failed to serialize packet" }
+                return
+            }
 
-        val serialized = serializedResult.get()
-
-        serialized.let {
+        byteArray.let {
             byteBuf.writeInt(it.size)
             byteBuf.writeBytes(it)
         }

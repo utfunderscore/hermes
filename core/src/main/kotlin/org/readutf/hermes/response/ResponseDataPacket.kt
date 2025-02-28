@@ -2,7 +2,7 @@ package org.readutf.hermes.response
 
 import org.readutf.hermes.Packet
 
-class ResponsePacket(
+class ResponseDataPacket(
     val response: Any,
     val originalId: Int,
-) : Packet()
+) : Packet<Unit>()

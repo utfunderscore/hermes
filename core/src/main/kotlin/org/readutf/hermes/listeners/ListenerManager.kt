@@ -4,7 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.Packet
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.listeners.annotation.PacketHandler
-import org.readutf.hermes.response.ResponsePacket
+import org.readutf.hermes.response.ResponseDataPacket
 import java.util.concurrent.ExecutorService
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -16,11 +16,11 @@ class ListenerManager(
     val executorService: ExecutorService,
 ) {
     private val logger = KotlinLogging.logger { }
-    private val listeners = mutableMapOf<Class<out Packet>, MutableList<Listener>>()
+    private val listeners = mutableMapOf<Class<out Packet<*>>, MutableList<Listener>>()
 
     fun handlePacket(
         hermesChannel: HermesChannel,
-        packet: Packet,
+        packet: Packet<*>,
     ) {
         executorService.submit {
             listeners.entries.forEach { (clazz, packetListeners) ->
@@ -33,7 +33,7 @@ class ListenerManager(
                         if (result == null || result is Unit) return@submit
 
                         logger.debug { "Sending response to packet" }
-                        hermesChannel.sendPacket(ResponsePacket(result, packet.packetId))
+                        hermesChannel.sendPacket(ResponseDataPacket(result, packet.packetId))
                     }
                 }
             }
@@ -41,7 +41,7 @@ class ListenerManager(
     }
 
     fun registerListener(
-        clazz: Class<out Packet>,
+        clazz: Class<out Packet<*>>,
         vararg listener: Listener,
     ) {
         val currentListeners = listeners.getOrDefault(clazz, mutableListOf())
@@ -49,25 +49,25 @@ class ListenerManager(
         listeners[clazz] = currentListeners
     }
 
-    inline fun <reified T : Packet, reified U : HermesChannel, V> registerListener(typedListener: TypedListener<T, U, V>) {
+    inline fun <reified T : Packet<V>, reified U : HermesChannel, V> registerListener(typedListener: TypedListener<T, U, V>) {
         registerListener(
             T::class.java,
             object : Listener {
                 override fun acceptPacket(
                     hermesChannel: HermesChannel,
-                    packet: Packet,
-                ): V = typedListener.handle(packet as T, hermesChannel as U)
+                    packet: Packet<*>,
+                ) = typedListener.handle(packet as T, hermesChannel as U)
             },
         )
     }
 
-    inline fun <reified T : Packet> registerListener(crossinline typedListener: (T) -> Unit) {
+    inline fun <reified T : Packet<*>> registerListener(crossinline typedListener: (T) -> Unit) {
         registerListener(
             T::class.java,
             object : Listener {
                 override fun acceptPacket(
                     hermesChannel: HermesChannel,
-                    packet: Packet,
+                    packet: Packet<*>,
                 ) {
                     typedListener(packet as T)
                 }
@@ -93,7 +93,7 @@ class ListenerManager(
                     return
                 }
 
-                val packetClass: Class<out Packet> =
+                val packetClass: Class<out Packet<*>> =
                     parameters[0]
                         .type.jvmErasure.java
                         .asSubclass(Packet::class.java)
@@ -102,7 +102,7 @@ class ListenerManager(
                     object : Listener {
                         override fun acceptPacket(
                             hermesChannel: HermesChannel,
-                            packet: Packet,
+                            packet: Packet<*>,
                         ): Any? {
                             val result = function.call(scannedObject, packet)
                             if (result is Unit) return null
@@ -143,7 +143,7 @@ class ListenerManager(
                     object : Listener {
                         override fun acceptPacket(
                             hermesChannel: HermesChannel,
-                            packet: Packet,
+                            packet: Packet<*>,
                         ) {
                             val args = arrayOfNulls<Any>(3)
                             args[0] = scannedObject

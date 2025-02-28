@@ -6,6 +6,6 @@ import org.readutf.hermes.channel.HermesChannel
 interface Listener {
     fun acceptPacket(
         hermesChannel: HermesChannel,
-        packet: Packet,
+        packet: Packet<*>,
     ): Any?
 }

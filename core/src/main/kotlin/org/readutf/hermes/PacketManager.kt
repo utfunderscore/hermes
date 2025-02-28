@@ -5,8 +5,8 @@ import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.exceptions.ExceptionManager
 import org.readutf.hermes.listeners.ListenerManager
 import org.readutf.hermes.platform.PacketPlatform
-import org.readutf.hermes.response.ResponseListener
-import org.readutf.hermes.response.ResponsePacket
+import org.readutf.hermes.response.ResponseDataListener
+import org.readutf.hermes.response.ResponseDataPacket
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.function.Consumer
@@ -18,7 +18,7 @@ class PacketManager<T : PacketPlatform>(
     val logger = KotlinLogging.logger { }
     private val listenerManager = ListenerManager(executorService)
     private val exceptionManager = ExceptionManager()
-    val responseFutures = mutableMapOf<Int, CompletableFuture<ResponsePacket>>()
+    val responseFutures = mutableMapOf<Int, CompletableFuture<ResponseDataPacket>>()
 
     init {
         packetPlatform.setupPacketListener { channel, packet ->
@@ -26,16 +26,16 @@ class PacketManager<T : PacketPlatform>(
         }
         packetPlatform.init(this)
         editListeners {
-            it.registerListener(ResponseListener(this))
+            it.registerListener(ResponseDataListener(this))
         }
     }
 
-    fun sendPacket(packet: Packet) {
+    fun sendPacket(packet: Packet<*>) {
         packetPlatform.sendPacket(packet)
     }
 
-    inline fun <reified T> sendPacket(packet: Packet): CompletableFuture<T> {
-        val future = CompletableFuture<ResponsePacket>()
+    inline fun <reified T> sendPacket(packet: Packet<T>): CompletableFuture<T> {
+        val future = CompletableFuture<ResponseDataPacket>()
         responseFutures[packet.packetId] = future
         packetPlatform.sendPacket(packet)
 
@@ -79,7 +79,7 @@ class PacketManager<T : PacketPlatform>(
 
     private fun onPacketReceived(
         hermesChannel: HermesChannel,
-        packet: Packet,
+        packet: Packet<*>,
     ) {
         logger.debug { "Received packet: $packet" }
         listenerManager.handlePacket(hermesChannel, packet)
