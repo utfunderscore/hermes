@@ -9,9 +9,9 @@ import java.util.function.BiConsumer
 interface PacketPlatform {
     fun init(packetManager: PacketManager<*>)
 
-    fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>)
+    fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet<*>>)
 
-    fun sendPacket(packet: Packet)
+    fun sendPacket(packet: Packet<*>)
 
     fun getChannel(channelId: String): HermesChannel?
 

@@ -9,6 +9,7 @@ dependencies {
 
     // logging
     api("io.github.oshai:kotlin-logging-jvm:5.1.0")
+    api("com.michael-bull.kotlin-result:kotlin-result:2.0.1")
 
     // Reflection
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.0")

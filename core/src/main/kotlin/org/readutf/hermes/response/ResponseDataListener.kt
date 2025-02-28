@@ -1,19 +1,21 @@
 package org.readutf.hermes.response
 
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.readutf.hermes.PacketManager
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.listeners.TypedListener
 
-class ResponseListener(
+class ResponseDataListener(
     private val packetManager: PacketManager<*>,
-) : TypedListener<ResponsePacket, HermesChannel, Unit> {
+) : TypedListener<ResponseDataPacket, HermesChannel, Unit> {
     private val logger = KotlinLogging.logger { }
 
     override fun handle(
-        packet: ResponsePacket,
+        packet: ResponseDataPacket,
         channel: HermesChannel,
-    ) {
+    ): Result<Unit, Throwable> {
         logger.debug { "Received response packet ${packet.originalId}" }
 
         val future = packetManager.responseFutures[packet.originalId]
@@ -28,5 +30,7 @@ class ResponseListener(
         } else {
             logger.debug { "No future found" }
         }
+
+        return Ok(Unit)
     }
 }
