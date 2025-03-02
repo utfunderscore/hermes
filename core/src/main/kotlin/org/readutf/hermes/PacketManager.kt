@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService
 public class PacketManager<PLATFORM : PacketPlatform<PLATFORM>> private constructor(
     public val packetPlatform: PLATFORM,
     executorService: ExecutorService,
-    metricsRegistry: MeterRegistry = SimpleMeterRegistry(),
+    metricsRegistry: MeterRegistry,
 ) {
     init {
         HermesMetrics.init(metricsRegistry)
@@ -120,6 +120,7 @@ public class PacketManager<PLATFORM : PacketPlatform<PLATFORM>> private construc
         public fun <T : PacketPlatform<T>> create(
             platform: T,
             executorService: ExecutorService,
-        ): Result<PacketManager<T>, Throwable> = PacketManager(platform, executorService).init()
+            meterRegistry: MeterRegistry = SimpleMeterRegistry(),
+        ): Result<PacketManager<T>, Throwable> = PacketManager(platform, executorService, meterRegistry).init()
     }
 }

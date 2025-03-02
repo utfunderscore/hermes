@@ -5,6 +5,8 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.runCatching
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.netty.bootstrap.AbstractBootstrap
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
@@ -207,20 +209,22 @@ fun PacketManager.Companion.nettyServer(
     hostName: String = "localhost",
     port: Int = 4000,
     serializer: PacketSerializer,
+    meterRegistry: MeterRegistry = SimpleMeterRegistry(),
     serverBootstrap: ServerBootstrap = ServerBootstrap(),
     executorService: ExecutorService = ForkJoinPool.commonPool(),
 ): Result<PacketManager<NettyServerPlatform>, Throwable> {
     val platform = NettyServerPlatform(hostName, port, serializer, serverBootstrap)
-    return create(platform, executorService)
+    return create(platform, executorService, meterRegistry)
 }
 
 fun PacketManager.Companion.nettyClient(
     hostName: String = "localhost",
     port: Int = 4000,
     serializer: PacketSerializer,
+    meterRegistry: MeterRegistry = SimpleMeterRegistry(),
     serverBootstrap: Bootstrap = Bootstrap(),
     executorService: ExecutorService = ForkJoinPool.commonPool(),
 ): Result<PacketManager<NettyClientPlatform>, Throwable> {
     val platform = NettyClientPlatform(hostName, port, serializer, serverBootstrap)
-    return create(platform, executorService)
+    return create(platform, executorService, meterRegistry)
 }
