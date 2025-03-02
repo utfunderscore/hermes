@@ -3,8 +3,8 @@ package org.readutf.hermes.serializer
 import com.github.michaelbull.result.Result
 import org.readutf.hermes.Packet
 
-interface PacketSerializer {
-    fun serialize(packet: Packet<*>): Result<ByteArray, Throwable>
+public interface PacketSerializer {
+    public fun serialize(packet: Packet<*>): Result<ByteArray, Throwable>
 
-    fun deserialize(bytes: ByteArray): Result<Packet<*>, Throwable>
+    public fun deserialize(bytes: ByteArray): Result<Packet<*>, Throwable>
 }

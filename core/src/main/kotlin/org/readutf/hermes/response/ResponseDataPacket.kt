@@ -2,7 +2,9 @@ package org.readutf.hermes.response
 
 import org.readutf.hermes.Packet
 
-class ResponseDataPacket(
-    val response: Any,
-    val originalId: Int,
+public class ResponseDataPacket(
+    public val success: Boolean,
+    public val response: Any?,
+    public val error: String?,
+    internal val originalId: Int,
 ) : Packet<Unit>()

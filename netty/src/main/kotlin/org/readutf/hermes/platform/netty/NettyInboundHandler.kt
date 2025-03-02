@@ -8,7 +8,7 @@ import org.readutf.hermes.channel.ChannelClosePacket
 import org.readutf.hermes.channel.ChannelOpenPacket
 
 class NettyInboundHandler(
-    private val packetPlatform: NettyPlatform,
+    private val packetPlatform: NettyPlatform<*>,
 ) : ChannelInboundHandlerAdapter() {
     private val logger = KotlinLogging.logger { }
 
@@ -46,15 +46,5 @@ class NettyInboundHandler(
         packetPlatform.handlePacket(hermesChannel, ChannelClosePacket(hermesChannel))
 
         packetPlatform.removeChannel(ctx.channel())
-    }
-
-    override fun exceptionCaught(
-        ctx: ChannelHandlerContext,
-        cause: Throwable,
-    ) {
-        val handled = packetPlatform.packetManager.handleException(cause)
-        if (!handled) {
-            throw cause
-        }
     }
 }
