@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
 import org.readutf.hermes.Packet
+import org.readutf.hermes.metrics.HermesMetrics
 import org.readutf.hermes.serializer.PacketSerializer
 
 class NettyPacketEncoder(
@@ -24,6 +25,8 @@ class NettyPacketEncoder(
                 logger.error(err) { "Failed to serialize packet" }
                 return
             }
+
+        HermesMetrics.packetSize.record(byteArray.size.toDouble())
 
         byteArray.let {
             byteBuf.writeInt(it.size)
