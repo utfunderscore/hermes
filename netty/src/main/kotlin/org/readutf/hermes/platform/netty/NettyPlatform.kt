@@ -1,5 +1,9 @@
 package org.readutf.hermes.platform.netty
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.runCatching
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.bootstrap.AbstractBootstrap
 import io.netty.bootstrap.Bootstrap
@@ -21,27 +25,25 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
 import java.util.function.BiConsumer
 
-abstract class NettyPlatform internal constructor(
+abstract class NettyPlatform<T : PacketPlatform<T>> internal constructor(
     internal val hostName: String,
     internal val port: Int,
     internal var serializer: PacketSerializer,
     internal var bootstrap: AbstractBootstrap<*, *>,
 ) : ChannelInboundHandlerAdapter(),
-    PacketPlatform {
+    PacketPlatform<T> {
     val logger = KotlinLogging.logger { }
 
-    private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet>
+    private lateinit var packetConsumer: BiConsumer<HermesChannel, Packet<*>>
     lateinit var channel: Channel
-    lateinit var packetManager: PacketManager<NettyPlatform>
+    private lateinit var packetManager: PacketManager<T>
 
     private val channelMap = mutableMapOf<Channel, HermesChannel>()
     private val channelIdMap = mutableMapOf<String, HermesChannel>()
 
     var activeChannels = mutableMapOf<String, Channel>()
 
-    override fun init(packetManager: PacketManager<*>) {
-        this.packetManager = packetManager as PacketManager<NettyPlatform>
-    }
+    override fun init(packetManager: PacketManager<T>): Result<Unit, Throwable> = runCatching { this.packetManager = packetManager }
 
     fun getChannelInitializer(): ChannelInitializer<SocketChannel> =
         object : ChannelInitializer<SocketChannel>() {
@@ -55,7 +57,7 @@ abstract class NettyPlatform internal constructor(
 
     fun handlePacket(
         hermesChannel: HermesChannel,
-        packet: Packet,
+        packet: Packet<*>,
     ) {
         if (::packetConsumer.isInitialized) packetConsumer.accept(hermesChannel, packet)
     }
@@ -64,7 +66,7 @@ abstract class NettyPlatform internal constructor(
 
     fun removeChannel(channel: Channel) = channelMap.remove(channel)
 
-    override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>) {
+    override fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet<*>>) {
         this.packetConsumer = packetConsumer
     }
 
@@ -72,12 +74,14 @@ abstract class NettyPlatform internal constructor(
 
     fun getChannels(): Collection<Channel> = activeChannels.values
 
-    override fun sendPacket(packet: Packet) {
+    override fun sendPacket(packet: Packet<*>): Result<Unit, Throwable> {
         if (::channel.isInitialized) {
             logger.debug { "Writing packet $packet and flushing..." }
             channel.writeAndFlush(packet)
+            return Ok(Unit)
         } else {
-            logger.warn { "Channel not initialized, cannot send packet" }
+            logger.error { "Channel not initialized" }
+            return Err(Exception("Channel not initialized"))
         }
     }
 
@@ -91,7 +95,7 @@ class NettyServerPlatform(
     port: Int,
     serializer: PacketSerializer,
     bootstrap: ServerBootstrap,
-) : NettyPlatform(
+) : NettyPlatform<NettyServerPlatform>(
         hostName,
         port,
         serializer,
@@ -142,7 +146,7 @@ class NettyClientPlatform(
     port: Int,
     serializer: PacketSerializer,
     bootstrap: Bootstrap,
-) : NettyPlatform(
+) : NettyPlatform<NettyClientPlatform>(
         hostName,
         port,
         serializer,
@@ -205,7 +209,7 @@ fun PacketManager.Companion.nettyServer(
     serializer: PacketSerializer,
     serverBootstrap: ServerBootstrap = ServerBootstrap(),
     executorService: ExecutorService = ForkJoinPool.commonPool(),
-): PacketManager<NettyServerPlatform> {
+): Result<PacketManager<NettyServerPlatform>, Throwable> {
     val platform = NettyServerPlatform(hostName, port, serializer, serverBootstrap)
     return create(platform, executorService)
 }
@@ -216,7 +220,7 @@ fun PacketManager.Companion.nettyClient(
     serializer: PacketSerializer,
     serverBootstrap: Bootstrap = Bootstrap(),
     executorService: ExecutorService = ForkJoinPool.commonPool(),
-): PacketManager<NettyClientPlatform> {
+): Result<PacketManager<NettyClientPlatform>, Throwable> {
     val platform = NettyClientPlatform(hostName, port, serializer, serverBootstrap)
     return create(platform, executorService)
 }
