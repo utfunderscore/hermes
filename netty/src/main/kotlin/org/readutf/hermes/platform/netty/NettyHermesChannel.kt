@@ -7,7 +7,7 @@ import org.readutf.hermes.channel.HermesChannel
 
 class NettyHermesChannel(
     private var channel: Channel,
-    packetManager: PacketManager<NettyPlatform>,
+    packetManager: PacketManager<*>,
 ) : HermesChannel(channelId = channel.id().asLongText(), packetManager) {
     override fun sendPacket(packet: Packet<*>) {
         logger.debug { "Sending packet: $packet" }
