@@ -1,26 +1,24 @@
 package org.readutf.hermes.platform
 
+import com.github.michaelbull.result.Result
 import org.readutf.hermes.Packet
 import org.readutf.hermes.PacketManager
 import org.readutf.hermes.channel.HermesChannel
 import org.readutf.hermes.serializer.PacketSerializer
 import java.util.function.BiConsumer
 
-interface PacketPlatform {
-    fun init(packetManager: PacketManager<*>)
+public interface PacketPlatform<PLATFORM : PacketPlatform<PLATFORM>> {
+    public fun init(packetManager: PacketManager<PLATFORM>): Result<Unit, Throwable>
 
-    fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet>)
+    public fun setupPacketListener(packetConsumer: BiConsumer<HermesChannel, Packet<*>>)
 
-    fun sendPacket(packet: Packet)
+    public fun sendPacket(packet: Packet<*>): Result<Unit, Throwable>
 
-    fun getChannel(channelId: String): HermesChannel?
+    public fun getChannel(channelId: String): HermesChannel?
 
-    fun setSerializer(serializer: PacketSerializer)
+    public fun setSerializer(serializer: PacketSerializer)
 
-    fun handleException(throwable: Throwable) {
-    }
+    public fun start()
 
-    fun start()
-
-    fun stop()
+    public fun stop()
 }
