@@ -19,6 +19,4 @@ include("netty")
 
 // Packet Serialization Libraries
 include("kryo")
-include("fastJson")
 include("jackson")
-include("neo")
