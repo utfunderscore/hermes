@@ -30,8 +30,6 @@ subprojects {
         mavenCentral()
     }
 
-    println(project.name)
-
     publishing {
         publications {
             create<MavenPublication>("mavenJava") {
