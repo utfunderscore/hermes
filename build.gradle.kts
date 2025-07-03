@@ -12,48 +12,48 @@ repositories {
 }
 
 subprojects {
+    apply(plugin = "java")
 
     group = rootProject.group
     version = rootProject.version
 
-    apply(plugin = "java")
-    apply(plugin = "maven-publish")
-
     java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+        withJavadocJar()
         withSourcesJar()
     }
 
-    tasks.test {
-        useJUnitPlatform()
-    }
-    repositories {
-        mavenCentral()
-    }
+    if(name in listOf("client", "common", "api")) {
+        apply(plugin = "maven-publish")
 
-    publishing {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                groupId = project.group as String
-                artifactId = project.name
-                version = project.version as String
-                from(components["java"])
-            }
-        }
+        publishing {
+            publications {
+                create<MavenPublication>("maven") {
+                    groupId = project.group as String
+                    artifactId = project.name
+                    version = project.version as String
 
-        repositories {
-            maven {
-                name = "utfMvn"
-                url = uri("https://mvn.utf.lol/releases")
-                credentials {
-                    username = System.getenv("UTF_MVN_USER")
-                    password = System.getenv("UTF_MVN_PASS")
+                    from(components["java"])
                 }
             }
+
+            repositories {
+                maven {
+                    name = "utfMvn"
+                    url = uri("https://mvn.utf.lol/releases")
+                    credentials {
+                        username = System.getenv("UTF_MVN_USER") ?: findProperty("utfMvnUser")?.toString() ?: ""
+                        password = System.getenv("UTF_MVN_PASS") ?: findProperty("utfMvnPass")?.toString() ?: ""
+                    }
+                }
+
+            }
+
         }
     }
-}
 
-dependencies {
 }
 
 tasks.test {
