@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "2.0.1"
+version = "2.0.3"
 
 repositories {
     mavenCentral()
@@ -25,34 +25,33 @@ subprojects {
         withSourcesJar()
     }
 
-    if(name in listOf("client", "common", "api")) {
-        apply(plugin = "maven-publish")
+    apply(plugin = "maven-publish")
 
-        publishing {
-            publications {
-                create<MavenPublication>("maven") {
-                    groupId = project.group as String
-                    artifactId = project.name
-                    version = project.version as String
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                groupId = project.group as String
+                artifactId = project.name
+                version = project.version as String
 
-                    from(components["java"])
-                }
+                from(components["java"])
             }
+        }
 
-            repositories {
-                maven {
-                    name = "utfMvn"
-                    url = uri("https://mvn.utf.lol/releases")
-                    credentials {
-                        username = System.getenv("UTF_MVN_USER") ?: findProperty("utfMvnUser")?.toString() ?: ""
-                        password = System.getenv("UTF_MVN_PASS") ?: findProperty("utfMvnPass")?.toString() ?: ""
-                    }
+        repositories {
+            maven {
+                name = "utfMvn"
+                url = uri("https://mvn.utf.lol/releases")
+                credentials {
+                    username = System.getenv("UTF_MVN_USER") ?: findProperty("utfMvnUser")?.toString() ?: ""
+                    password = System.getenv("UTF_MVN_PASS") ?: findProperty("utfMvnPass")?.toString() ?: ""
                 }
-
             }
 
         }
+
     }
+
 
 }
 

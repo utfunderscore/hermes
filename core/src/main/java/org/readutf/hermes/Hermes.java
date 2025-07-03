@@ -82,20 +82,27 @@ public abstract class Hermes {
 
     protected void readData(@NotNull Channel channel, byte[] packetData) {
         log.debug("Reading data from channel: {}", channel.getId());
+        Packet<?> packet = codec.decode(packetData);
+
+        handlePacket(channel, packet);
+    }
+
+    protected void handlePacket(Channel channel, Packet<?> packet) {
+        log.debug("Handling packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
 
         try {
-            Packet<?> packet = codec.decode(packetData);
             Object result = eventManager.handlePacket(channel, packet);
 
             log.info("Received packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
 
-            if(packet.expectsResponse()) {
+            if (packet.expectsResponse()) {
                 sendPacket(channel, new ResponsePacket(packet.getId(), result));
             }
         } catch (Exception e) {
             log.error("Failed to decode packet from channel {}: {}", channel.getId(), e.getMessage(), e);
             throw new RuntimeException("Failed to decode packet", e);
         }
+
     }
 
 }

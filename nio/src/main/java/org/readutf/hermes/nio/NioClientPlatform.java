@@ -1,12 +1,14 @@
 package org.readutf.hermes.nio;
 
 import org.jetbrains.annotations.Nullable;
+import org.readutf.hermes.packet.ChannelClosePacket;
 import org.readutf.hermes.platform.Channel;
 import org.readutf.hermes.codec.PacketCodec;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.*;
+import java.util.concurrent.CompletableFuture;
 
 public class NioClientPlatform extends AbstractNioPlatform {
 
@@ -18,6 +20,17 @@ public class NioClientPlatform extends AbstractNioPlatform {
 
     public void connect(InetSocketAddress address) throws Exception {
         super.start(address);
+    }
+
+    public void connectBlocking(InetSocketAddress address) throws Exception {
+        connect(address);
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        listen(ChannelClosePacket.class, (channel, event) -> {
+            future.complete(null);
+            return null;
+        });
+        future.join();
     }
 
     @Override
@@ -52,7 +65,7 @@ public class NioClientPlatform extends AbstractNioPlatform {
 
     @Override
     protected void writeData(byte[] packetData) throws Exception {
-        if(socketChannel != null) {
+        if (socketChannel != null) {
             Channel channel = nioToChannel.get(socketChannel);
             if (channel == null) {
                 throw new IllegalStateException("Channel not found for the socket channel.");

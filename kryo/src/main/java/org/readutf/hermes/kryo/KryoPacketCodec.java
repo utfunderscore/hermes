@@ -3,10 +3,13 @@ package org.readutf.hermes.kryo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
 import com.esotericsoftware.kryo.util.Pool;
 import org.jetbrains.annotations.NotNull;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.readutf.hermes.packet.Packet;
 import org.readutf.hermes.codec.PacketCodec;
+import org.readutf.hermes.packet.ResponsePacket;
 
 import java.io.ByteArrayOutputStream;
 import java.util.function.Supplier;
@@ -24,6 +27,9 @@ public class KryoPacketCodec implements PacketCodec {
             @Override
             protected Kryo create() {
                 Kryo kryo = kryoSupplier.get();
+
+                kryo.register(kryo.register(ResponsePacket.class));
+                kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
 
                 // Register classes here if needed
                 return kryo;

@@ -56,10 +56,8 @@ public class NioIntegrationTests {
 
         KryoPacketCodec codec = new KryoPacketCodec(() -> {
             Kryo kryo = new Kryo();
-            kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
             kryo.register(TestPacket.class);
             kryo.register(TestResponsePacket.class);
-            kryo.register(ResponsePacket.class);
             return kryo;
         });
 
