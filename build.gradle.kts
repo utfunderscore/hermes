@@ -1,13 +1,11 @@
-import org.gradle.kotlin.dsl.`maven-publish`
-
 plugins {
-    kotlin("jvm") version "2.0.0"
+    `java-library`
     `maven-publish`
     signing
 }
 
 group = "org.readutf.hermes"
-version = "1.2.3"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
@@ -19,7 +17,6 @@ subprojects {
     version = rootProject.version
 
     apply(plugin = "java")
-    apply(plugin = "kotlin")
     apply(plugin = "maven-publish")
 
     java {
@@ -29,14 +26,9 @@ subprojects {
     tasks.test {
         useJUnitPlatform()
     }
-    kotlin {
-        jvmToolchain(17)
-    }
     repositories {
         mavenCentral()
     }
-
-    println(project.name)
 
     publishing {
         publications {
@@ -62,13 +54,8 @@ subprojects {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
-}
-
-kotlin {
-    jvmToolchain(17)
 }

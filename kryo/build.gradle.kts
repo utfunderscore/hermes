@@ -1,11 +1,19 @@
 plugins {
-    kotlin("jvm") version "2.0.0"
-    id("maven-publish")
+    `java-library`
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
 
-    compileOnly("com.esotericsoftware:kryo:5.6.0")
+    compileOnly("com.esotericsoftware:kryo:5.6.2")
     compileOnly(project(":core"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
