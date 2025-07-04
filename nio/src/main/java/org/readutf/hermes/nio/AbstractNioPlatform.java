@@ -91,7 +91,6 @@ public abstract class AbstractNioPlatform extends Hermes {
     protected void writeData(Channel channel, byte[] packetData) {
 
         SocketChannel nioChannel = channelToNio.get(channel);
-        System.out.println(channelToNio);
         if (nioChannel == null) {
             log.warn("No NIO channel found for {}", channel);
             return;
