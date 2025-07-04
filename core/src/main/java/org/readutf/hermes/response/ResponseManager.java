@@ -28,7 +28,7 @@ public class ResponseManager {
     public Listener<ResponsePacket, Void> createResponseListener() {
         return (channel, packet) -> {
 
-            log.info("Received response packet: {}", packet);
+            log.debug("Received response packet: {}", packet);
 
             int originalPacketId = packet.getOriginalPacketId();
             ResponseData<?> responseData = responseFutures.remove(originalPacketId);

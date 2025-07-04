@@ -101,7 +101,7 @@ public abstract class Hermes {
         try {
             Object result = eventManager.handlePacket(channel, packet);
 
-            log.info("Received packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
+            log.debug("Received packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
 
             if (packet.expectsResponse()) {
                 sendPacket(channel, new ResponsePacket(packet.getId(), result));
