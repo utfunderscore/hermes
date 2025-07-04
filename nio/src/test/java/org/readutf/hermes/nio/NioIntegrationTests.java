@@ -63,9 +63,8 @@ public class NioIntegrationTests {
 
         NioServerPlatform nioServerPlatform = new NioServerPlatform(codec);
 
-        nioServerPlatform.listen(TestPacket.class, (channel, packet) -> {
+        nioServerPlatform.listenIgnore(TestPacket.class, (channel, packet) -> {
             log.info("Received packet event: {}", packet);
-            return null; // No response needed
         });
 
         nioServerPlatform.listen(TestResponsePacket.class, (channel, packet) -> {

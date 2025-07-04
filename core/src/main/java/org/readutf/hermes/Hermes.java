@@ -56,12 +56,15 @@ public abstract class Hermes {
         return responseManager.createFuture(packet, type);
     }
 
-    public <T> void listen(Class<? extends Packet<T>> type, @NotNull Listener<? extends Packet<T>, T> listener) {
+    public <T, V extends Packet<T>> void listen(Class<V> type, @NotNull Listener<V, T> listener) {
         eventManager.listen(type, listener);
     }
 
-    public <T extends Packet<Void>> void listenIgnore(Class<T> type, @NotNull Listener<T, Void> listener) {
-        eventManager.listen(type, listener);
+    public <T extends Packet<Void>> void listenIgnore(Class<T> type, @NotNull BiConsumer<Channel, T> listener) {
+       listen(type, (channel, event) -> {
+           listener.accept(channel, event);
+           return null;
+       });
     }
 
     protected abstract void start(InetSocketAddress address) throws Exception;

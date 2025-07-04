@@ -26,10 +26,7 @@ public class NioClientPlatform extends AbstractNioPlatform {
         connect(address);
 
         CompletableFuture<Void> future = new CompletableFuture<>();
-        listen(ChannelClosePacket.class, (channel, event) -> {
-            future.complete(null);
-            return null;
-        });
+        listenIgnore(ChannelClosePacket.class, (channel, event) -> future.complete(null));
         future.join();
     }
 
