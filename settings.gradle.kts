@@ -11,3 +11,4 @@ rootProject.name = "hermes"
 include("core")
 include("kryo")
 include("nio")
+include("netty")
