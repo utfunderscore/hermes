@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 public abstract class Hermes {
 
@@ -56,6 +57,10 @@ public abstract class Hermes {
     }
 
     public <T> void listen(Class<? extends Packet<T>> type, @NotNull Listener<? extends Packet<T>, T> listener) {
+        eventManager.listen(type, listener);
+    }
+
+    public <T extends Packet<Void>> void listenIgnore(Class<T> type, @NotNull Listener<T, Void> listener) {
         eventManager.listen(type, listener);
     }
 
