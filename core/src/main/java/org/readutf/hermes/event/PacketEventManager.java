@@ -24,7 +24,7 @@ public class PacketEventManager {
     }
 
     public @Nullable Object handlePacket(Channel channel, Packet<?> packet) throws Exception {
-        ConcurrentLinkedQueue<PrivateListener> listeners = packetListeners.get(packet.getClass());
+        ConcurrentLinkedQueue<PrivateListener> listeners = packetListeners.getOrDefault(packet.getClass(), new ConcurrentLinkedQueue<>());
 
         if (listeners.isEmpty()) {
             log.warn("No listeners registered for packet type: {}", packet.getClass().getName());

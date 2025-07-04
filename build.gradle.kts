@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "2.0.3"
+version = System.getenv("GIT_COMMIT") ?: "dev"
 
 repositories {
     mavenCentral()
