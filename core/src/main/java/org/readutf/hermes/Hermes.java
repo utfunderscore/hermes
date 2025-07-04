@@ -55,7 +55,7 @@ public abstract class Hermes {
         return responseManager.createFuture(packet, type);
     }
 
-    public <T> void listen(Class<? extends Packet<T>> type, @NotNull Listener<Packet<T>, T> listener) {
+    public <T> void listen(Class<? extends Packet<T>> type, @NotNull Listener<? extends Packet<T>, T> listener) {
         eventManager.listen(type, listener);
     }
 
