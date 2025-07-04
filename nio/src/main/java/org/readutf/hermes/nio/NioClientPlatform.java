@@ -4,6 +4,8 @@ import org.jetbrains.annotations.Nullable;
 import org.readutf.hermes.packet.ChannelClosePacket;
 import org.readutf.hermes.platform.Channel;
 import org.readutf.hermes.codec.PacketCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class NioClientPlatform extends AbstractNioPlatform {
 
+    private static final Logger log = LoggerFactory.getLogger(NioClientPlatform.class);
     private @Nullable SocketChannel socketChannel;
 
     public NioClientPlatform(PacketCodec codec) throws IOException {
@@ -42,6 +45,17 @@ public class NioClientPlatform extends AbstractNioPlatform {
     protected void handleConnection(SocketChannel channel) {
         super.handleConnection(channel);
         this.socketChannel = channel;
+    }
+
+    @Override
+    public void handleDisconnect(SocketChannel channel) {
+        super.handleDisconnect(channel);
+        this.socketChannel = null;
+        try {
+            disconnect();
+        } catch (IOException e) {
+            log.error("Error during disconnect", e);
+        }
     }
 
     @Override

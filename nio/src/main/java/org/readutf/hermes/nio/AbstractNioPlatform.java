@@ -2,6 +2,7 @@ package org.readutf.hermes.nio;
 
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.Nullable;
+import org.readutf.hermes.packet.ChannelClosePacket;
 import org.readutf.hermes.platform.Channel;
 import org.readutf.hermes.Hermes;
 import org.readutf.hermes.codec.PacketCodec;
@@ -170,6 +171,7 @@ public abstract class AbstractNioPlatform extends Hermes {
     public void handleDisconnect(SocketChannel channel) {
         Channel hermesChannel = nioToChannel.remove(channel);
         if (hermesChannel != null) {
+            handlePacket(hermesChannel, new ChannelClosePacket(hermesChannel));
             channelToNio.remove(hermesChannel);
         }
     }
