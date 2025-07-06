@@ -2,7 +2,7 @@ package org.readutf.hermes.event;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.readutf.hermes.platform.Channel;
+import org.readutf.hermes.platform.HermesChannel;
 import org.readutf.hermes.packet.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class PacketEventManager {
         packetListeners.put(type, listeners);
     }
 
-    public @Nullable Object handlePacket(Channel channel, Packet<?> packet) throws Exception {
+    public @Nullable Object handlePacket(HermesChannel hermesChannel, Packet<?> packet) throws Exception {
         ConcurrentLinkedQueue<PrivateListener> listeners = packetListeners.getOrDefault(packet.getClass(), new ConcurrentLinkedQueue<>());
 
         if (listeners.isEmpty()) {
@@ -33,14 +33,14 @@ public class PacketEventManager {
 
         @Nullable Object result = null;
         for (PrivateListener listener : listeners) {
-            result = listener.onPacket(channel, packet);
+            result = listener.onPacket(hermesChannel, packet);
         }
         return result;
     }
 
     private interface PrivateListener {
 
-        @Nullable Object onPacket(@NotNull Channel channel, @NotNull Packet<?> packet) throws Exception;
+        @Nullable Object onPacket(@NotNull HermesChannel hermesChannel, @NotNull Packet<?> packet) throws Exception;
 
     }
 

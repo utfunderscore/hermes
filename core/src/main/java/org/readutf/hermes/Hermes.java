@@ -6,13 +6,14 @@ import org.readutf.hermes.event.Listener;
 import org.readutf.hermes.event.PacketEventManager;
 import org.readutf.hermes.packet.Packet;
 import org.readutf.hermes.packet.ResponsePacket;
-import org.readutf.hermes.platform.Channel;
+import org.readutf.hermes.platform.HermesChannel;
 import org.readutf.hermes.response.ResponseManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 public abstract class Hermes {
 
@@ -28,17 +29,18 @@ public abstract class Hermes {
         eventManager.listen(ResponsePacket.class, responseManager.createResponseListener());
     }
 
-    public void sendPacket(Channel channel, Packet<?> packet) {
+    public void sendPacket(HermesChannel hermesChannel, Packet<?> packet) {
         byte[] packetData = codec.encode(packet);
         if (packetData == null || packetData.length == 0) {
             throw new IllegalArgumentException("Packet data cannot be null or empty");
         }
 
-        if (channel == null) {
+        if (hermesChannel == null) {
             throw new IllegalArgumentException("Packet channel cannot be null");
         }
 
-        writeData(channel, packetData);
+        log.debug("Sending packet: {} to channel: {}", packet.getClass().getSimpleName(), hermesChannel.getId());
+        writeData(hermesChannel, packetData);
     }
 
     public void sendPacket(Packet<?> packet) throws Exception {
@@ -55,8 +57,15 @@ public abstract class Hermes {
         return responseManager.createFuture(packet, type);
     }
 
-    public <T> void listen(Class<? extends Packet<T>> type, @NotNull Listener<Packet<T>, T> listener) {
+    public <T, V extends Packet<T>> void listen(Class<V> type, @NotNull Listener<V, T> listener) {
         eventManager.listen(type, listener);
+    }
+
+    public <T extends Packet<Void>> void listenIgnore(Class<T> type, @NotNull BiConsumer<HermesChannel, T> listener) {
+       listen(type, (channel, event) -> {
+           listener.accept(channel, event);
+           return null;
+       });
     }
 
     protected abstract void start(InetSocketAddress address) throws Exception;
@@ -65,10 +74,10 @@ public abstract class Hermes {
      * Sends a packet to the target channel.
      * The child class handles serialization of the packet.
      *
-     * @param channel
+     * @param hermesChannel
      * @param packetData
      */
-    protected abstract void writeData(Channel channel, byte[] packetData);
+    protected abstract void writeData(HermesChannel hermesChannel, byte[] packetData);
 
     /**
      * Sends a packet to the target channel.
@@ -80,29 +89,32 @@ public abstract class Hermes {
     protected void writeData(byte[] packetData) throws Exception {
     }
 
-    protected void readData(@NotNull Channel channel, byte[] packetData) {
-        log.debug("Reading data from channel: {}", channel.getId());
+    protected void readData(@NotNull HermesChannel hermesChannel, byte[] packetData) {
+        log.debug("Reading data from channel: {}", hermesChannel.getId());
         Packet<?> packet = codec.decode(packetData);
 
-        handlePacket(channel, packet);
+        handlePacket(hermesChannel, packet);
     }
 
-    protected void handlePacket(Channel channel, Packet<?> packet) {
-        log.debug("Handling packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
+    protected void handlePacket(HermesChannel hermesChannel, Packet<?> packet) {
+        log.debug("Handling packet: {} from channel: {}", packet.getClass().getSimpleName(), hermesChannel.getId());
 
         try {
-            Object result = eventManager.handlePacket(channel, packet);
+            Object result = eventManager.handlePacket(hermesChannel, packet);
 
-            log.info("Received packet: {} from channel: {}", packet.getClass().getSimpleName(), channel.getId());
+            log.debug("Received packet: {} from channel: {}", packet.getClass().getSimpleName(), hermesChannel.getId());
 
             if (packet.expectsResponse()) {
-                sendPacket(channel, new ResponsePacket(packet.getId(), result));
+                sendPacket(hermesChannel, new ResponsePacket(packet.getId(), result));
             }
         } catch (Exception e) {
-            log.error("Failed to decode packet from channel {}: {}", channel.getId(), e.getMessage(), e);
+            log.error("Failed to decode packet from channel {}: {}", hermesChannel.getId(), e.getMessage(), e);
             throw new RuntimeException("Failed to decode packet", e);
         }
 
     }
 
+    public @NotNull PacketCodec getCodec() {
+        return codec;
+    }
 }
