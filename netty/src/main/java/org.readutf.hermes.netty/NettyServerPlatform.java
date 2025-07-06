@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 
 public class NettyServerPlatform extends NettyPlatform {
 
@@ -32,22 +33,23 @@ public class NettyServerPlatform extends NettyPlatform {
 
     @Override
     protected void initializeBootstrap() {
+        Supplier<InboundHandler> inboundHandlerSupplier = () -> new InboundHandler(this);
         serverBootstrap
-            .group(bossGroup, workerGroup)
-            .channel(NioServerSocketChannel.class)
-            .childHandler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel socketChannel) {
-                    var pipeline = socketChannel.pipeline();
-                    pipeline.addLast("decoder", packetDecoder);
-                    pipeline.addLast("encoder", packetEncoder);
-                    pipeline.addLast("handler", inboundHandler);
-                }
-            });
+                .group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) {
+                        var pipeline = socketChannel.pipeline();
+                        pipeline.addLast("decoder", new PacketEncoder(getCodec()));
+                        pipeline.addLast("encoder", new PacketDecoder(getCodec()));
+                        pipeline.addLast("handler", inboundHandlerSupplier.get());
+                    }
+                });
     }
 
     @Override
-    protected void start(InetSocketAddress address) throws Exception {
+    public void start(InetSocketAddress address) throws Exception {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         thread = new Thread(() -> {
@@ -61,6 +63,7 @@ public class NettyServerPlatform extends NettyPlatform {
                 channelFuture.channel().closeFuture().sync();
             } catch (Exception e) {
                 log.error("Error initializing Netty server", e);
+                shutdown();
                 future.completeExceptionally(e);
             }
         });

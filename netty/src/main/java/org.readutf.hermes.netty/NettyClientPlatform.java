@@ -16,9 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class NettyClientPlatform extends NettyPlatform {
 
@@ -36,81 +35,47 @@ public class NettyClientPlatform extends NettyPlatform {
 
     @Override
     protected void initializeBootstrap() {
-        bootstrap.group(group)
-            .channel(NioSocketChannel.class)
-            .handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) {
-                    var pipeline = ch.pipeline();
-                    pipeline.addLast("decoder", packetDecoder);
-                    pipeline.addLast("encoder", packetEncoder);
-                    pipeline.addLast("handler", inboundHandler);
-                }
-            });
+        InboundHandler inboundHandler = new InboundHandler(this);
+        bootstrap.group(group).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) {
+                var pipeline = ch.pipeline();
+                pipeline.addLast("decoder", new PacketDecoder(getCodec()));
+                pipeline.addLast("encoder", new PacketEncoder(getCodec()));
+                pipeline.addLast("handler", inboundHandler);
+            }
+        });
     }
 
     @Override
-    protected void start(InetSocketAddress address) throws Exception {
-        CountDownLatch connectionLatch = new CountDownLatch(1);
+    protected void start(InetSocketAddress address) throws Exception {}
 
-        thread = new Thread(() -> {
-            try {
-                ChannelFuture channelFuture = bootstrap.connect(address).sync();
-                clientChannel = channelFuture.channel();
+    /**
+     * Connects to a server and returns a CompletableFuture that resolves to the connection's HermesChannel
+     */
+    public void connect(InetSocketAddress address, long timeoutMillis) throws Exception {
+        CompletableFuture<Void> future = new CompletableFuture<>();
 
-                connectionLatch.countDown();
-                log.info("Connected to server at {}", address);
-
-                // Wait for the channel to close
-                clientChannel.closeFuture().sync();
-            } catch (Exception e) {
-                log.error("Error connecting to server", e);
-            }
-        });
+        thread = new Task(future, address);
 
         thread.setName("NettyClientThread");
         thread.setDaemon(true);
         thread.start();
 
         // Wait for the connection to be established
-        connectionLatch.await();
-    }
-    
-    /**
-     * Connects to a server and returns a CompletableFuture that resolves to the connection's HermesChannel
-     */
-    public void connect(InetSocketAddress address) {
-        CompletableFuture<HermesChannel> future = new CompletableFuture<>();
-
-        try {
-            bootstrap.connect(address).addListener((ChannelFuture channelFuture) -> {
-                if (channelFuture.isSuccess()) {
-                    clientChannel = channelFuture.channel();
-                    
-                    // Create a new Hermes channel for this connection
-                    HermesChannel hermesChannel = new HermesChannel();
-                    // Register the mapping between Hermes and Netty channels
-                    registerChannel(hermesChannel, clientChannel);
-                    
-                    log.info("Connected to server at {}", address);
-                    future.complete(hermesChannel);
-                } else {
-                    log.error("Failed to connect to server at {}", address, channelFuture.cause());
-                    future.completeExceptionally(channelFuture.cause());
-                }
-            });
-        } catch (Exception e) {
-            log.error("Error connecting to server at {}", address, e);
-            future.completeExceptionally(e);
-        }
-        
-        future.join();
+        future.get(timeoutMillis, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void sendPacket(Packet<?> packet) throws Exception {
         HermesChannel hermesChannel = getHermesChannel(clientChannel);
         sendPacket(hermesChannel, packet);
+    }
+
+    public void awaitShutdown() throws InterruptedException {
+        if (thread != null) {
+            thread.join();
+        }
     }
 
     /**
@@ -122,18 +87,50 @@ public class NettyClientPlatform extends NettyPlatform {
             log.info("Disconnected from server");
         }
     }
-    
+
     @Override
     public void shutdown() {
         try {
             if (clientChannel != null) {
                 clientChannel.close().sync();
             }
-            group.shutdownGracefully().sync();
+            group.shutdownGracefully().syncUninterruptibly();
             log.info("Netty client shut down gracefully");
         } catch (InterruptedException e) {
             log.error("Error shutting down Netty client", e);
             Thread.currentThread().interrupt();
+        }
+    }
+
+    public class Task extends Thread {
+
+        private final CompletableFuture<Void> connectionLatch;
+        private final InetSocketAddress address;
+
+        public Task(CompletableFuture<Void> connectionLatch, InetSocketAddress address) {
+            this.connectionLatch = connectionLatch;
+            this.address = address;
+        }
+
+        @Override
+        public void run() {
+            try {
+                log.info("Attempting to connect to server at {}", address);
+                ChannelFuture channelFuture = bootstrap.connect(address).sync();
+                clientChannel = channelFuture.channel();
+                connectionLatch.complete(null);
+
+                log.info("Connected to server at {}", address);
+
+                // Wait for the channel to close
+                log.info("Waiting for channel to close...");
+                clientChannel.closeFuture().sync();
+                log.info("Channel closed, shutting down client");
+            } catch (Exception e) {
+                connectionLatch.completeExceptionally(e);
+            }
+            log.info("Thread {} finished execution", Thread.currentThread().getName());
+            shutdown();
         }
     }
 }

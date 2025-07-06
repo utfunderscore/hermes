@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "2.0.9"
+version = "dev"
 
 repositories {
     mavenCentral()

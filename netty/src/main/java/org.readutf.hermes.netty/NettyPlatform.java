@@ -20,9 +20,6 @@ public abstract class NettyPlatform extends Hermes {
 
     private static final Logger log = LoggerFactory.getLogger(NettyPlatform.class);
     protected @Nullable Thread thread;
-    protected @NotNull final PacketDecoder packetDecoder;
-    protected @NotNull final PacketEncoder packetEncoder;
-    protected @NotNull final InboundHandler inboundHandler;
 
     protected final @NotNull Map<HermesChannel, Channel> hermesToNettyChannel;
     protected final @NotNull Map<Channel, HermesChannel> nettyToHermesChannel;
@@ -31,9 +28,6 @@ public abstract class NettyPlatform extends Hermes {
         super(codec);
         this.hermesToNettyChannel = new ConcurrentHashMap<>();
         this.nettyToHermesChannel = new ConcurrentHashMap<>();
-        this.packetDecoder = new PacketDecoder(codec);
-        this.packetEncoder = new PacketEncoder(codec);
-        this.inboundHandler = new InboundHandler(this);
     }
 
     @Override
@@ -71,10 +65,10 @@ public abstract class NettyPlatform extends Hermes {
 
     public void unregisterChannel(Channel nettyChannel) {
         HermesChannel hermesChannel = nettyToHermesChannel.remove(nettyChannel);
+        handlePacket(hermesChannel, new ChannelClosePacket());
         if (hermesChannel != null) {
             hermesToNettyChannel.remove(hermesChannel);
             log.info("Unregistered channel: {}", hermesChannel.getId());
-             sendPacket(hermesChannel, new ChannelClosePacket());
         } else {
             log.warn("Attempted to unregister a channel that was not found: {}", nettyChannel.id());
         }
@@ -83,9 +77,9 @@ public abstract class NettyPlatform extends Hermes {
     public @Nullable HermesChannel getHermesChannel(Channel nettyChannel) {
         return nettyToHermesChannel.get(nettyChannel);
     }
-    
+
     protected abstract void initializeBootstrap();
-    
+
     /**
      * Registers a connection between a Hermes channel and a Netty channel
      */
@@ -94,7 +88,7 @@ public abstract class NettyPlatform extends Hermes {
         nettyToHermesChannel.put(nettyChannel, hermesChannel);
         log.info("Registered new channel: {}", hermesChannel.getId());
     }
-    
+
     /**
      * Cleanly shuts down the event loop groups
      */
