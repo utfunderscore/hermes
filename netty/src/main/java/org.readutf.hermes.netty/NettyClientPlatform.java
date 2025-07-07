@@ -159,6 +159,7 @@ public class NettyClientPlatform extends NettyPlatform {
                 }
 
                 clientChannel = channelFuture.channel();
+                registerChannel(new HermesChannel(), clientChannel);
                 connectionLatch.complete(null);
 
                 log.info("Connected to server at {}", address);

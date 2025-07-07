@@ -27,18 +27,17 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
 
         Packet<?> packet = (Packet<?>) msg;
 
-        Channel channel = ctx.channel();
         HermesChannel hermesChannel = nettyPlatform.getHermesChannel(ctx.channel());
         nettyPlatform.handlePacket(hermesChannel, packet);
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         nettyPlatform.registerChannel(new HermesChannel(), ctx.channel());
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         nettyPlatform.unregisterChannel(ctx.channel());
     }
 }
