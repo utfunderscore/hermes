@@ -52,8 +52,12 @@ public abstract class Hermes {
         writeData(packetData);
     }
 
-    public <T> CompletableFuture<T> sendResponsePacket(Packet<T> packet, Class<? extends T> type) throws Exception {
-        sendPacket(packet);
+    public <T> CompletableFuture<T> sendResponsePacket(Packet<T> packet, Class<? extends T> type) {
+        try {
+            sendPacket(packet);
+        } catch (Exception e) {
+            return CompletableFuture.completedFuture(null);
+        }
         return responseManager.createFuture(packet, type);
     }
 
