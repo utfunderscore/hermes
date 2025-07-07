@@ -34,7 +34,7 @@ public class NettyServerPlatformIntegrationTest {
         serverPlatform.start(new InetSocketAddress(5000));
 
         NettyClientPlatform clientPlatform = new NettyClientPlatform(new KryoPacketCodec(kryoSupplier));
-        clientPlatform.connect(new InetSocketAddress(5000), 5000);
+        clientPlatform.connect(new InetSocketAddress(5000));
 
         CompletableFuture<Void> future = new CompletableFuture<>();
 
