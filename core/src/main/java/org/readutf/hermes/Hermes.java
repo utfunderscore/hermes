@@ -61,6 +61,15 @@ public abstract class Hermes {
         return responseManager.createFuture(packet, type);
     }
 
+    public <T> CompletableFuture<T> sendResponsePacket(HermesChannel channel, Packet<T> packet, Class<? extends T> type) {
+        try {
+            sendPacket(channel, packet);
+        } catch (Exception e) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return responseManager.createFuture(packet, type);
+    }
+
     public <T, V extends Packet<T>> void listen(Class<V> type, @NotNull Listener<V, T> listener) {
         eventManager.listen(type, listener);
     }
