@@ -34,7 +34,12 @@ public class ResponseManager {
             ResponseData<?> responseData = responseFutures.remove(originalPacketId);
 
             if (responseData != null) {
+
                 CompletableFuture<?> future = responseData.future;
+                if(packet.isError()) {
+                    future.completeExceptionally(new Exception("Error in response packet for original packet ID " + originalPacketId + ": " + packet.getResponseData()));
+                    return null;
+                }
                 if (responseData.type.isInstance(packet.getResponseData())) {
                     responseData.complete(packet);
                 } else {

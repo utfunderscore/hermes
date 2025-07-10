@@ -1,7 +1,6 @@
 package org.readutf.hermes.netty;
 
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.readutf.hermes.Hermes;
@@ -12,7 +11,6 @@ import org.readutf.hermes.platform.HermesChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
