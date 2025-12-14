@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "2.2.0"
+version = System.getenv("GITHUB_REF_NAME") ?: "dev"
 
 repositories {
     mavenCentral()
