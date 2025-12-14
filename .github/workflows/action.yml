@@ -38,7 +38,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME}"
 
       - name: Build with Gradle
-        run: ./gradlew shadowJar --no-daemon --stacktrace
+        run: ./gradlew build --no-daemon --stacktrace
 
       - name: Publish to UTF Maven Repository
         run: ./gradlew publishAllPublicationsToUtfMvnRepository --no-daemon --stacktrace
