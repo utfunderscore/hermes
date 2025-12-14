@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.readutf.hermes"
-version = "2.1.14"
+version = "2.2.0"
 
 repositories {
     mavenCentral()
@@ -42,8 +42,8 @@ subprojects {
                 name = "utfMvn"
                 url = uri("https://mvn.utf.lol/releases")
                 credentials {
-                    username = System.getenv("UTF_MVN_USER") ?: findProperty("utfMvnUser")?.toString() ?: ""
-                    password = System.getenv("UTF_MVN_PASS") ?: findProperty("utfMvnPass")?.toString() ?: ""
+                    username = System.getenv("UTF_MVN_USER") ?: findProperty("UtfMvnUser")?.toString() ?: ""
+                    password = System.getenv("UTF_MVN_PASS") ?: findProperty("UtfMvnPass")?.toString() ?: ""
                 }
             }
 

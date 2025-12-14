@@ -1,15 +1,16 @@
 package org.readutf.hermes.packet;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ResponsePacket extends Packet<Void> {
+public class ResponsePacket implements Packet<Void> {
 
     private final int originalPacketId;
     private final @Nullable Object responseData;
     private final boolean error;
 
     private ResponsePacket(int originalPacketId, @Nullable Object responseData, boolean error) {
-        super(false);
         this.originalPacketId = originalPacketId;
         this.responseData = responseData;
         this.error = error;
@@ -27,12 +28,23 @@ public class ResponsePacket extends Packet<Void> {
         return error;
     }
 
-    public static ResponsePacket error(int originalPacketId, @Nullable String errorMessage) {
+    @Contract(value = "_, _ -> new", pure = true)
+    public static @NotNull ResponsePacket error(int originalPacketId, @Nullable String errorMessage) {
         return new ResponsePacket(originalPacketId, errorMessage, true);
     }
 
-    public static ResponsePacket success(int originalPacketId, @Nullable Object responseData) {
+    @Contract(value = "_, _ -> new", pure = true)
+    public static @NotNull ResponsePacket success(int originalPacketId, @Nullable Object responseData) {
         return new ResponsePacket(originalPacketId, responseData, false);
     }
 
+    @Override
+    public boolean expectsResponse() {
+        return false;
+    }
+
+    @Override
+    public int getId() {
+        return Integer.MIN_VALUE + 1;
+    }
 }

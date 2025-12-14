@@ -13,12 +13,21 @@ import java.util.function.Supplier;
 
 public class NettyServerPlatformIntegrationTest {
 
-    public static class TestPacket extends Packet<Void> {
+    public static class TestPacket implements Packet<Void> {
         public String message;
 
         public TestPacket(String message) {
-            super(false);
             this.message = message;
+        }
+
+        @Override
+        public boolean expectsResponse() {
+            return false;
+        }
+
+        @Override
+        public int getId() {
+            return 0;
         }
     }
 
