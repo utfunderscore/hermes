@@ -121,6 +121,7 @@ public abstract class Hermes {
                 sendPacket(hermesChannel, ResponsePacket.success(packet.getId(), result));
             }
         } catch (Exception e) {
+            log.error("Failed to handle packet: {}", packet.getClass().getSimpleName(), e);
             if (packet.expectsResponse()) {
                 sendPacket(hermesChannel, ResponsePacket.error(packet.getId(), e.getMessage()));
             }
