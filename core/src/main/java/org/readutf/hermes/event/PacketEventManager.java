@@ -16,11 +16,10 @@ public class PacketEventManager {
     private final ConcurrentHashMap<Class<?>, ConcurrentLinkedQueue<PrivateListener>> packetListeners = new ConcurrentHashMap<>();
 
     public <T> void listen(Class<? extends Packet<T>> type, Listener<? extends Packet<T>, T> listener) {
-        ConcurrentLinkedQueue<PrivateListener> listeners = packetListeners.getOrDefault(type, new ConcurrentLinkedQueue<>());
+        ConcurrentLinkedQueue<PrivateListener> listeners = packetListeners.computeIfAbsent(type, k -> new ConcurrentLinkedQueue<>());
         Listener<Packet<T>, T> castedListener = (Listener<Packet<T>, T>) listener;
 
         listeners.add((channel, packet) -> castedListener.onPacket(channel, type.cast(packet)));
-        packetListeners.put(type, listeners);
     }
 
     public @Nullable Object handlePacket(HermesChannel hermesChannel, Packet<?> packet) throws Exception {
