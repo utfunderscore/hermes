@@ -6,39 +6,6 @@ A multi-module Java framework for packet-based communication with support for di
 
 Hermes provides a clean abstraction for sending and receiving typed packets over network connections. It handles serialization, event dispatching, and request-response patterns out of the box.
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Hermes                              │
-│            (Abstract base class for platforms)             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        ▼                     ▼                     ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────────┐
-│   Packet<R>   │    │ PacketCodec   │    │ PacketEventManager│
-│  (Interface)  │    │  (Interface)  │    │                   │
-└───────────────┘    └───────────────┘    └───────────────────┘
-                              │                     │
-                              ▼                     ▼
-                    ┌───────────────┐    ┌───────────────────┐
-                    │KryoPacketCodec│    │  ResponseManager  │
-                    │   (Impl)      │    │                   │
-                    └───────────────┘    └───────────────────┘
-                                              
-                                              
-              ┌───────────────────────────────────────────┐
-              │              NettyPlatform               │
-              │         (Abstract Netty base)           │
-              └───────────────────────────────────────────┘
-                          │                   │
-                          ▼                   ▼
-              ┌───────────────────┐  ┌───────────────────┐
-              │NettyServerPlatform│  │NettyClientPlatform│
-              └───────────────────┘  └───────────────────┘
-```
-
 ## Modules
 
 | Module | Description |
