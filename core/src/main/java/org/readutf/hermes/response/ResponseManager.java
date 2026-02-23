@@ -1,5 +1,7 @@
 package org.readutf.hermes.response;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.readutf.hermes.event.Listener;
 import org.readutf.hermes.packet.Packet;
 import org.readutf.hermes.packet.ResponsePacket;
@@ -8,11 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ResponseManager {
 
     private static final Logger log = LoggerFactory.getLogger(ResponseManager.class);
-    private final ConcurrentHashMap<Integer, ResponseData<?>> responseFutures = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ConcurrentLinkedQueue<ResponseData<?>>> pendingResponses = new ConcurrentHashMap<>();
 
     public <T> CompletableFuture<T> createFuture(Packet<T> packet, Class<? extends T> type) {
         if (!packet.expectsResponse()) {
@@ -20,7 +23,9 @@ public class ResponseManager {
         }
 
         CompletableFuture<T> future = new CompletableFuture<>();
-        responseFutures.put(packet.getId(), new ResponseData<>((Class<T>) type, future));
+        ConcurrentLinkedQueue<ResponseData<?>> queue = pendingResponses.computeIfAbsent(
+                packet.getId(), k -> new ConcurrentLinkedQueue<>());
+        queue.add(new ResponseData<>((Class<T>) type, future));
         return future;
     }
 
@@ -31,10 +36,10 @@ public class ResponseManager {
             log.debug("Received response packet: {}", packet);
 
             int originalPacketId = packet.getOriginalPacketId();
-            ResponseData<?> responseData = responseFutures.remove(originalPacketId);
+            ConcurrentLinkedQueue<ResponseData<?>> queue = pendingResponses.get(originalPacketId);
+            ResponseData<?> responseData = queue != null ? queue.poll() : null;
 
             if (responseData != null) {
-
                 CompletableFuture<?> future = responseData.future;
                 if(packet.isError()) {
                     future.completeExceptionally(new Exception("Error in response packet for original packet ID " + originalPacketId + ": " + packet.getResponseData()));
@@ -45,6 +50,9 @@ public class ResponseManager {
                 } else {
                     future.completeExceptionally(new ClassCastException("Response data type mismatch"));
                 }
+            } else if (queue != null && queue.isEmpty()) {
+                pendingResponses.remove(originalPacketId);
+                log.warn("Received response for packet ID {} but no pending requests found", originalPacketId);
             }
             return null;
         };
